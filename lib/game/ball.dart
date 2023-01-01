@@ -8,7 +8,6 @@ import 'package:pongsense/game/pong_game.dart';
 
 class Ball extends CircleComponent
     with HasGameRef<PongGame>, CollisionCallbacks {
-
   Ball() {
     paint = Paint()..color = Colors.white;
     radius = 10;
@@ -65,9 +64,9 @@ class Ball extends CircleComponent
   @override
   @mustCallSuper
   void onCollisionStart(
-      Set<Vector2> intersectionPoints,
-      PositionComponent other,
-      ) {
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
     super.onCollisionStart(intersectionPoints, other);
     final collisionPoint = intersectionPoints.first;
 

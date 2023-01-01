@@ -12,19 +12,16 @@ class PongGame extends FlameGame
   @override
   Future<void> onLoad() async {
     addAll(
-      [
-        ScreenHitbox(),
-        Ball()
-      ],
+      [ScreenHitbox(), Ball()],
     );
   }
 
   @override
   @mustCallSuper
   KeyEventResult onKeyEvent(
-      RawKeyEvent event,
-      Set<LogicalKeyboardKey> keysPressed,
-      ) {
+    RawKeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
     super.onKeyEvent(event, keysPressed);
 
     return KeyEventResult.handled;
