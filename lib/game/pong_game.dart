@@ -1,12 +1,18 @@
+import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pongsense/esense/flame/esense.dart';
 import 'package:pongsense/game/ball.dart';
 
 class PongGame extends FlameGame
-    with HasTappables, HasCollisionDetection, HasKeyboardHandlerComponents {
+    with
+        HasTappables,
+        HasCollisionDetection,
+        HasKeyboardHandlerComponents,
+        HasESenseHandlerComponents {
   PongGame();
 
   @override
@@ -25,5 +31,13 @@ class PongGame extends FlameGame
     super.onKeyEvent(event, keysPressed);
 
     return KeyEventResult.handled;
+  }
+
+  @override
+  @mustCallSuper
+  ESenseEventResult onESenseEvent(ESenseEvent event) {
+    super.onESenseEvent(event);
+
+    return ESenseEventResult.handled;
   }
 }

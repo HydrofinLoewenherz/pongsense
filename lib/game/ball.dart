@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:esense_flutter/esense.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:pongsense/esense/flame/esense.dart';
 import 'package:pongsense/game/pong_game.dart';
 
 class Ball extends CircleComponent
@@ -28,6 +30,15 @@ class Ball extends CircleComponent
     addAll([
       hitBox,
     ]);
+
+    add(ESenseListenerComponent(callbacks: {
+      ButtonEventChanged: (event) {
+        print("ButtonEventChanged on Ball detected");
+        print(event);
+
+        return true;
+      }
+    }));
 
     return super.onLoad();
   }
