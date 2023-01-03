@@ -186,8 +186,6 @@ class _MyAppState extends State<MyApp> {
     ]);
     await Future.delayed(const Duration(milliseconds: 1000));
 
-    _startListenToSensorEvents();
-
     // get basic data for internal state
     _sender.pushAll([
       eSenseManager.getDeviceName,
