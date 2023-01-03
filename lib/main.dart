@@ -6,6 +6,9 @@ import 'package:esense_flutter/esense.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'esense/sender.dart';
+import 'flame/esense.dart';
+import 'package:flame/game.dart';
+import 'game/pong_game.dart';
 
 typedef ESenseCallback = Future<void> Function();
 
@@ -18,16 +21,14 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _deviceName = 'Unknown';
-  double _voltage = -1;
   ConnectionType _connectionStatus = ConnectionType.unknown;
   bool sampling = false;
-  String _event = '';
-  String _button = 'not pressed';
   List<int>? _accOffsets;
   ESenseConfig? _config;
   final Sender _sender = Sender(1000);
   StreamSubscription? eSenseEventSubscription;
   StreamSubscription? sensorEventSubscription;
+  final PongGame _game = PongGame();
 
   // the name of the eSense device to connect to -- change this to your own device.
   // String eSenseName = 'eSense-0164';
@@ -42,25 +43,6 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
-    _sender.pushAll([
-      () async => print('----- 0 --------'),
-      () async => print('----- 1 --------'),
-      () async => print('----- 2 --------'),
-      () async => print('----- 3 --------'),
-      () async => print('----- 4 --------'),
-      () async => print('----- 5 --------'),
-      () async => print('----- 6 --------'),
-      () async => print('----- 7 --------'),
-      () async => print('----- 8 --------'),
-      () async => print('----- 9 --------'),
-      () async => print('----- 10 --------'),
-      () async => print('----- 11 --------'),
-      () async => print('----- 12 --------'),
-      () async => print('----- 13 --------'),
-    ]);
-    print('ayo pushed that shit');
-
     _initStateAsync();
   }
 
@@ -120,47 +102,55 @@ class _MyAppState extends State<MyApp> {
   void _onESenseEvent(ESenseEvent event_) {
     print('ESENSE event: $event_');
 
+    switch (_game.onESenseEvent(event_)) {
+      case ESenseEventResult.handled:
+        print('handled');
+        return;
+      case ESenseEventResult.ignored:
+        print('ignored');
+        break;
+      case ESenseEventResult.skipRemainingHandlers:
+        print('skipRemaining');
+        return;
+    }
+
     switch (event_.runtimeType) {
       case DeviceNameRead:
         final event = event_ as DeviceNameRead;
-        setState(() {
-          _deviceName = event.deviceName ?? 'Unknown';
-        });
+        _deviceName = event.deviceName!;
         break;
       case BatteryRead:
         final event = event_ as BatteryRead;
-        setState(() {
-          _voltage = event.voltage ?? -1;
-        });
         break;
       case ButtonEventChanged:
         final event = event_ as ButtonEventChanged;
-        setState(() {
-          _button = event.pressed ? 'pressed' : 'not pressed';
-        });
         break;
       case AccelerometerOffsetRead:
         final event = event_ as AccelerometerOffsetRead;
-        setState(() {
-          _accOffsets = [event.offsetX!, event.offsetY!, event.offsetZ!];
-        });
+        _accOffsets = [event.offsetX!, event.offsetY!, event.offsetZ!];
         break;
       case AdvertisementAndConnectionIntervalRead:
         final event = event_ as AdvertisementAndConnectionIntervalRead;
-        setState(() {
-          // TODO
-        });
         break;
       case SensorConfigRead:
         final event = event_ as SensorConfigRead;
-        setState(() {
-          _config = event.config;
-        });
         break;
     }
   }
 
   void _onSensorEvent(SensorEvent event) {
+    switch (_game.onSensorEvent(event)) {
+      case ESenseEventResult.handled:
+        print('handled');
+        return;
+      case ESenseEventResult.ignored:
+        print('ignored');
+        break;
+      case ESenseEventResult.skipRemainingHandlers:
+        print('skipRemaining');
+        return;
+    }
+
     if (_config == null || _accOffsets == null) {
       print('SENSOR event: $event');
       print("Config or offsets not yet received");
@@ -234,46 +224,7 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('eSense Demo App'),
         ),
-        body: Align(
-          alignment: Alignment.topLeft,
-          child: ListView(
-            children: [
-              Text('eSense Device Status: \t$_connectionStatus'),
-              Text('eSense Device Name: \t$_deviceName'),
-              Text('eSense Battery Level: \t$_voltage'),
-              Text('eSense Button Event: \t$_button'),
-              const Text(''),
-              Text(_event),
-              Container(
-                height: 80,
-                width: 200,
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
-                child: TextButton.icon(
-                  onPressed: _connectToESense,
-                  icon: const Icon(Icons.login),
-                  label: const Text(
-                    'CONNECTO....',
-                    style: TextStyle(fontSize: 35),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          // a floating button that starts/stops listening to sensor events.
-          // is disabled until we're connected to the device.
-          onPressed: (!eSenseManager.connected)
-              ? null
-              : (!sampling)
-                  ? _startListenToSensorEvents
-                  : _stopListenToSensorEvents,
-          tooltip: 'Listen to eSense sensors',
-          child: (!sampling)
-              ? const Icon(Icons.play_arrow)
-              : const Icon(Icons.pause),
-        ),
+        body: GameWidget(game: _game),
       ),
     );
   }

@@ -27,6 +27,10 @@ mixin ESenseHandler on Component {
   bool onESenseEvent(ESenseEvent event) {
     return true;
   }
+
+  bool onSensorEvent(SensorEvent event) {
+    return true;
+  }
 }
 
 mixin HasESenseHandlerComponents on FlameGame implements ESenseEvents {
@@ -46,11 +50,28 @@ mixin HasESenseHandlerComponents on FlameGame implements ESenseEvents {
     }
     return ESenseEventResult.ignored;
   }
+
+  @override
+  @mustCallSuper
+  ESenseEventResult onSensorEvent(
+    SensorEvent event,
+  ) {
+    final blockedPropagation = !propagateToChildren<ESenseHandler>(
+      (ESenseHandler child) => child.onSensorEvent(event),
+    );
+
+    // If any component received the event, return handled,
+    // otherwise, ignore it.
+    if (blockedPropagation) {
+      return ESenseEventResult.handled;
+    }
+    return ESenseEventResult.ignored;
+  }
 }
 
 /// A [Game] mixin to make a game subclass sensitive to esense events.
 ///
-/// Override [onESenseEvent] to customize the esense handling behavior.
+/// Override [onESenseEvent] and [onSensorEvent] to customize the esense handling behavior.
 mixin ESenseEvents on Game {
   ESenseEventResult onESenseEvent(ESenseEvent event) {
     assert(
@@ -62,10 +83,22 @@ mixin ESenseEvents on Game {
 
     return ESenseEventResult.handled;
   }
+
+  ESenseEventResult onSensorEvent(SensorEvent event) {
+    assert(
+      this is! HasESenseHandlerComponents,
+      'A sensor event was registered by ESenseEvents for a game also '
+      'mixed with HasESenseEventHandlerComponents. Do not mix with both, '
+      'HasESenseEventHandlerComponents removes the necessity of ESenseEvents',
+    );
+
+    return ESenseEventResult.handled;
+  }
 }
 
 /// The signature for a handle function
 typedef ESenseHandlerCallback = bool Function(ESenseEvent event);
+typedef SensorHandlerCallback = bool Function(SensorEvent event);
 
 /// {@template keyboard_listener_component}
 /// A [Component] that receives keyboard input and executes registered methods.
@@ -75,19 +108,28 @@ typedef ESenseHandlerCallback = bool Function(ESenseEvent event);
 class ESenseListenerComponent extends Component with ESenseHandler {
   /// {@macro keyboard_listener_component}
   ESenseListenerComponent({
-    Map<Type, ESenseHandlerCallback> callbacks = const {},
-  }) : _callbacks = callbacks;
+    Map<Type, ESenseHandlerCallback> eSenseCallbacks = const {},
+    SensorHandlerCallback? sensorCallback,
+  })  : _eSenseCallbacks = eSenseCallbacks,
+        _sensorCallback = sensorCallback;
 
-  final Map<Type, ESenseHandlerCallback> _callbacks;
+  final Map<Type, ESenseHandlerCallback> _eSenseCallbacks;
+  final SensorHandlerCallback? _sensorCallback;
 
   @override
   bool onESenseEvent(ESenseEvent event) {
-    final handler = _callbacks[event.runtimeType];
+    final callback = _eSenseCallbacks[event.runtimeType];
 
-    if (handler != null) {
-      return handler(event);
+    if (callback != null) {
+      return callback(event);
     }
 
+    return true;
+  }
+
+  @override
+  bool onSensorEvent(SensorEvent event) {
+    _sensorCallback?.call(event);
     return true;
   }
 }
