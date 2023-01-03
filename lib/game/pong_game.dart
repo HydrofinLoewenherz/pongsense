@@ -4,7 +4,7 @@ import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pongsense/esense/flame/esense.dart';
+import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ball.dart';
 
 class PongGame extends FlameGame
@@ -29,7 +29,6 @@ class PongGame extends FlameGame
     Set<LogicalKeyboardKey> keysPressed,
   ) {
     super.onKeyEvent(event, keysPressed);
-
     return KeyEventResult.handled;
   }
 

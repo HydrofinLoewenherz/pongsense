@@ -5,7 +5,7 @@ import 'package:esense_flutter/esense.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:pongsense/esense/flame/esense.dart';
+import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/pong_game.dart';
 
 class Ball extends CircleComponent
@@ -49,10 +49,7 @@ class Ball extends CircleComponent
 
     final vx = math.cos(spawnAngle * degree) * speed;
     final vy = math.sin(spawnAngle * degree) * speed;
-    velocity = Vector2(
-      vx,
-      vy,
-    );
+    velocity = Vector2(vx, vy);
   }
 
   double get getSpawnAngle {

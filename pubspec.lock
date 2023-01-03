@@ -102,9 +102,11 @@ packages:
   esense_flutter:
     dependency: "direct main"
     description:
-      name: esense_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "packages/esense_flutter"
+      ref: c44c6a45ac12b4a7aefde0cef0c6251a03f52edc
+      resolved-ref: c44c6a45ac12b4a7aefde0cef0c6251a03f52edc
+      url: "https://github.com/HydrofinLoewenherz/flutter-plugins.git"
+    source: git
     version: "0.6.2"
   fake_async:
     dependency: transitive
@@ -275,6 +277,41 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.3"
+  permission_handler:
+    dependency: "direct main"
+    description:
+      name: permission_handler
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "10.2.0"
+  permission_handler_android:
+    dependency: transitive
+    description:
+      name: permission_handler_android
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "10.2.0"
+  permission_handler_apple:
+    dependency: transitive
+    description:
+      name: permission_handler_apple
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "9.0.7"
+  permission_handler_platform_interface:
+    dependency: transitive
+    description:
+      name: permission_handler_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.9.0"
+  permission_handler_windows:
+    dependency: transitive
+    description:
+      name: permission_handler_windows
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.2"
   platform:
     dependency: transitive
     description:
