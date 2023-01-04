@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ball.dart';
+import 'package:pongsense/game/player_paddle.dart';
 
 class PongGame extends FlameGame
     with
@@ -18,7 +19,7 @@ class PongGame extends FlameGame
   @override
   Future<void> onLoad() async {
     addAll(
-      [ScreenHitbox(), Ball()],
+      [ScreenHitbox(), Ball(), PlayerPaddle()],
     );
   }
 
