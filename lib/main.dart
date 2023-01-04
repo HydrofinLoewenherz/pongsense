@@ -175,16 +175,16 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _startListenToSensorEvents() async {
-    // TOOD: onError, onDone
-    eSenseEventSubscription = eSenseManager.eSenseEvents.listen(_onESenseEvent);
-    sensorEventSubscription = eSenseManager.sensorEvents.listen(_onSensorEvent);
-
     // set listening config BEFORE listening
     print("setting listening config");
     _sender.pushAll([
       () => eSenseManager.setSamplingRate(10),
     ]);
     await Future.delayed(const Duration(milliseconds: 1000));
+
+    // TOOD: onError, onDone
+    eSenseEventSubscription = eSenseManager.eSenseEvents.listen(_onESenseEvent);
+    sensorEventSubscription = eSenseManager.sensorEvents.listen(_onSensorEvent);
 
     // get basic data for internal state
     _sender.pushAll([
