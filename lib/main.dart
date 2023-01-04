@@ -34,6 +34,7 @@ class _MyAppState extends State<MyApp> {
   // String eSenseName = 'eSense-0164';
   static const String eSenseDeviceName = 'eSense-0320';
 
+  static const int samplingRate = 50;
   static const double gravity = 9.80665;
   static const double accelerometerScaleFactor = 8192;
   static const double gyroscopeScaleFactor = 65.5;
@@ -90,7 +91,7 @@ class _MyAppState extends State<MyApp> {
         // TODO: Handle this case.
         break;
       case ConnectionType.device_not_found:
-        // TODO: Handle this case.
+        _connectToESense();
         break;
     }
 
@@ -139,34 +140,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _onSensorEvent(SensorEvent event) {
-    switch (_game.onSensorEvent(event)) {
-      case ESenseEventResult.handled:
-        print('handled');
-        return;
-      case ESenseEventResult.ignored:
-        print('ignored');
-        break;
-      case ESenseEventResult.skipRemainingHandlers:
-        print('skipRemaining');
-        return;
-    }
-
-    if (_config == null || _accOffsets == null) {
-      print('SENSOR event: $event');
-      print("Config or offsets not yet received");
-      return;
-    }
-
-    var mappedAccOffsets =
-        _accOffsets!.map((offset) => offset / AccRange.G_16.sensitivityFactor);
-    var actualAccels = event.accel!.map((val) {
-      return (val.toDouble() / _config!.accRange!.sensitivityFactor);
-    });
-
-    // ignore offsets
-    // actualAccels is in g, almost in the range [-1, 1]
-
-    print('offset: ${_accOffsets!}, acceel: ${actualAccels}');
+    _game.onSensorEvent(event);
   }
 
   Future<bool> _connectToESense() async {
@@ -175,15 +149,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _startListenToSensorEvents() async {
+    if (sampling) {
+      print("already listening");
+      return;
+    }
+
     // set listening config BEFORE listening
     print("setting listening config");
-    _sender.pushAll([
-      () => eSenseManager.setSamplingRate(10),
-    ]);
+    _sender.push(() => eSenseManager.setSamplingRate(samplingRate));
     await Future.delayed(const Duration(milliseconds: 1000));
 
     // TOOD: onError, onDone
     eSenseEventSubscription = eSenseManager.eSenseEvents.listen(_onESenseEvent);
+
+    await Future.delayed(const Duration(milliseconds: 1000));
+
     sensorEventSubscription = eSenseManager.sensorEvents.listen(_onSensorEvent);
 
     // get basic data for internal state
@@ -200,9 +180,9 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _stopListenToSensorEvents() async {
-    eSenseEventSubscription?.cancel();
-    sensorEventSubscription?.cancel();
+  Future<void> _stopListenToSensorEvents() async {
+    await eSenseEventSubscription?.cancel();
+    await sensorEventSubscription?.cancel();
     setState(() {
       sampling = false;
     });
@@ -210,8 +190,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    _stopListenToSensorEvents();
-    eSenseManager.disconnect();
+    _stopListenToSensorEvents().then((v) {
+      return eSenseManager.disconnect();
+    }).then((b) {
+      print("disconnected $b");
+    });
     super.dispose();
   }
 

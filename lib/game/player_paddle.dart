@@ -22,7 +22,10 @@ class PlayerPaddle extends PositionComponent
 
   ESenseConfig? eSenseConfig;
   bool calibrate = false;
+  bool calibrating = false; // TODO: use this
   Vector3? calibrationNormal;
+  DateTime? _lastValue;
+  int _counter = 0;
 
   PlayerPaddle(final ESenseManager eSenseManager, final Sender sender) {
     _sender = sender;
@@ -62,6 +65,17 @@ class PlayerPaddle extends PositionComponent
           }
         },
         sensorCallback: ((event) {
+          final now = DateTime.now();
+          if (_lastValue != null) {
+            if (_counter < 10) {
+              _counter += 1;
+            } else {
+              _counter = 0;
+              print('delay ${now.difference(_lastValue!).inMilliseconds}ms');
+            }
+          }
+          _lastValue = now;
+
           final accRange = eSenseConfig?.accRange;
           if (accRange == null) {
             _sender.pushAll([
@@ -76,6 +90,7 @@ class PlayerPaddle extends PositionComponent
 
           if (calibrate) {
             calibrationNormal = accel;
+            calibrate = false;
           }
 
           calcTarget(accel);
@@ -92,21 +107,20 @@ class PlayerPaddle extends PositionComponent
   void calcTarget(Vector3 accel) {
     final calibrationNormal = this.calibrationNormal;
     if (calibrationNormal == null) {
-      print("skipping calc target, not calibrated");
+      // print("skipping calc target, not calibrated");
       return;
     }
 
-    if (accel.length > 2) {
-      print("skipping calc target, length to big ${accel.length}");
+    if (accel.length > 1.2) {
+      print("skipping calc target, length too big ${accel.length}");
       return;
     }
 
-    const maxAngle = 30.0 * (pi / 180.0);
-    final angle = accel.angleTo(calibrationNormal);
+    const maxAngle = 90.0 * (pi / 180.0);
+    final angle = accel.angleToSigned(calibrationNormal, Vector3(1, 0, 0));
     final worldRect = gameRef.size.toRect();
 
-    final targetX =
-        remap(angle, -maxAngle, maxAngle, worldRect.left, worldRect.right);
+    final targetX = remap(angle, -pi, pi, worldRect.left, worldRect.right);
     targetPosition.x = targetX;
   }
 

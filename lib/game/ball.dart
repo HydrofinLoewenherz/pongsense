@@ -27,25 +27,7 @@ class Ball extends CircleComponent
       radius: radius,
     );
 
-    addAll([
-      hitBox,
-    ]);
-
-    add(ESenseListenerComponent(
-        eSenseCallbacks: {
-          ButtonEventChanged: (event) {
-            print("ButtonEventChanged on Ball detected");
-            print(event);
-
-            return true;
-          }
-        },
-        sensorCallback: (event) {
-          print("SensorEvent on Ball detected");
-          print(event);
-
-          return true;
-        }));
+    addAll([hitBox]);
 
     return super.onLoad();
   }
