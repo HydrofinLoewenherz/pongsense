@@ -28,7 +28,7 @@ class _MyAppState extends State<MyApp> {
   final Sender _sender = Sender(1000);
   StreamSubscription? eSenseEventSubscription;
   StreamSubscription? sensorEventSubscription;
-  final PongGame _game = PongGame();
+  late final PongGame _game = PongGame(eSenseManager, _sender);
 
   // the name of the eSense device to connect to -- change this to your own device.
   // String eSenseName = 'eSense-0164';

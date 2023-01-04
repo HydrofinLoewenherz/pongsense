@@ -1,17 +1,19 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:esense_flutter/esense.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
 
 class PlayerPaddle extends PositionComponent
     with HasGameRef<FlameGame>, CollisionCallbacks {
   static const double speed = 400;
+
+  late final Sender _sender;
+  late final ESenseManager _eSenseManager;
 
   late final RectangleHitbox paddleHitBox;
   late final RectangleComponent paddle;
@@ -21,6 +23,11 @@ class PlayerPaddle extends PositionComponent
   ESenseConfig? eSenseConfig;
   bool calibrate = false;
   Vector3? calibrationNormal;
+
+  PlayerPaddle(final ESenseManager eSenseManager, final Sender sender) {
+    _sender = sender;
+    _eSenseManager = eSenseManager;
+  }
 
   @override
   Future<void>? onLoad() {
@@ -57,6 +64,9 @@ class PlayerPaddle extends PositionComponent
         sensorCallback: ((event) {
           final accRange = eSenseConfig?.accRange;
           if (accRange == null) {
+            _sender.pushAll([
+              _eSenseManager.getSensorConfig,
+            ]);
             return false;
           }
 
