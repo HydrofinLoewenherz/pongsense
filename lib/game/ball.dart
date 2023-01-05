@@ -1,12 +1,19 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:esense_flutter/esense.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
-import 'package:pongsense/flame/esense.dart';
+import 'package:pongsense/game/ai_paddle.dart';
+import 'package:pongsense/game/player_paddle.dart';
 import 'package:pongsense/game/pong_game.dart';
+
+const maxGamePause = 0.2;
+
+bool almostEqual(double a, double b, {double confidence = 0.001}) {
+  return (a - b).abs() < confidence;
+}
 
 class Ball extends CircleComponent
     with HasGameRef<PongGame>, CollisionCallbacks {
@@ -46,8 +53,8 @@ class Ball extends CircleComponent
 
     final random = math.Random().nextDouble();
     final spawnAngle = sideToThrow
-        ? lerpDouble(-35, 35, random)!
-        : lerpDouble(145, 215, random)!;
+        ? lerpDouble(-135, -45, random)!
+        : lerpDouble(45, 135, random)!;
 
     return spawnAngle;
   }
@@ -55,6 +62,20 @@ class Ball extends CircleComponent
   @override
   void update(double dt) {
     super.update(dt);
+    if (dt > maxGamePause) {
+      return;
+    }
+
+    final worldRect = gameRef.size.toRect();
+    if (position.y < (worldRect.top - 0.001)) {
+      _resetBall;
+      return;
+    }
+    if (position.y > (worldRect.bottom + 0.001)) {
+      _resetBall;
+      return;
+    }
+
     position += velocity * dt;
   }
 
@@ -65,29 +86,54 @@ class Ball extends CircleComponent
     PositionComponent other,
   ) {
     super.onCollisionStart(intersectionPoints, other);
-    final collisionPoint = intersectionPoints.first;
 
     if (other is ScreenHitbox) {
-      // Left Side Collision
-      if (collisionPoint.x == 0) {
-        velocity.x = -velocity.x;
-        velocity.y = velocity.y;
-      }
-      // Right Side Collision
-      if (collisionPoint.x == gameRef.size.x) {
-        velocity.x = -velocity.x;
-        velocity.y = velocity.y;
-      }
-      // Top Side Collision
-      if (collisionPoint.y == 0) {
-        velocity.x = velocity.x;
-        velocity.y = -velocity.y;
-      }
-      // Bottom Side Collision
-      if (collisionPoint.y == gameRef.size.y) {
-        velocity.x = velocity.x;
-        velocity.y = -velocity.y;
-      }
+      handleScreenCollide(intersectionPoints);
+    }
+
+    if (other is PlayerPaddle) {
+      final paddleRect = other.paddle.toAbsoluteRect();
+      handleRectCollide(paddleRect, intersectionPoints);
+    }
+
+    if (other is AIPaddle) {
+      final paddleRect = other.paddle.toAbsoluteRect();
+      handleRectCollide(paddleRect, intersectionPoints);
+    }
+  }
+
+  void handleScreenCollide(final Set<Vector2> collisionPoints) {
+    final worldRect = gameRef.size.toRect();
+    final collisionPoint = collisionPoints.first;
+
+    // left side collision
+    if (almostEqual(collisionPoint.x, worldRect.left)) {
+      velocity.x = -velocity.x;
+    }
+    // right side collision
+    if (almostEqual(collisionPoint.x, worldRect.right)) {
+      velocity.x = -velocity.x;
+    }
+  }
+
+  void handleRectCollide(final Rect rect, final Set<Vector2> collisionPoints) {
+    final collisionPoint = collisionPoints.first;
+
+    // top side collision
+    if (almostEqual(collisionPoint.y, rect.top) && (velocity.y > 0)) {
+      velocity.y = -velocity.y;
+    }
+    // bottom side collision
+    if (almostEqual(collisionPoint.y, rect.bottom) && (velocity.y < 0)) {
+      velocity.y = -velocity.y;
+    }
+    // left side collision
+    if (almostEqual(collisionPoint.x, rect.left) && (velocity.x > 0)) {
+      velocity.x = -velocity.x;
+    }
+    // right side collision
+    if (almostEqual(collisionPoint.x, rect.right) && (velocity.x < 0)) {
+      velocity.x = -velocity.x;
     }
   }
 }

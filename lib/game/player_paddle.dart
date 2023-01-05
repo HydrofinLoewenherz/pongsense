@@ -37,9 +37,9 @@ class PlayerPaddle extends PositionComponent
     final worldRect = gameRef.size.toRect();
 
     // create paddle
-    size = Vector2(10, 100);
-    position.x = worldRect.width * 0.9 - 10;
-    position.y = worldRect.height / 2 - size.y / 2;
+    size = Vector2(100, 10);
+    position.x = worldRect.width / 2 - size.x / 2;
+    position.y = worldRect.height * 0.9 - 10;
     paddle = RectangleComponent(
       size: size,
       paint: Paint()..color = Colors.blue,
