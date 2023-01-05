@@ -51,7 +51,7 @@ class Ball extends CircleComponent
   }
 
   double get getSpawnAngle {
-    final sideToThrow = false; // math.Random().nextBool();
+    final sideToThrow = math.Random().nextBool();
 
     final random = math.Random().nextDouble();
     final spawnAngle = sideToThrow
