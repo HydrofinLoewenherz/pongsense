@@ -77,6 +77,15 @@ class Ball extends CircleComponent
     }
 
     position += velocity * dt;
+
+    game.add(ParticleSystemComponent(
+        particle: ComputedParticle(renderer: (canvas, particle) {
+          final paint = Paint()
+            ..color =
+                Color.lerp(Colors.white, Colors.black, particle.progress)!;
+          canvas.drawCircle(Offset.zero, radius, paint);
+        }),
+        position: position + Vector2(radius, radius)));
   }
 
   @override

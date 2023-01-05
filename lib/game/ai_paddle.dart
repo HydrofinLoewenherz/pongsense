@@ -38,7 +38,7 @@ class AIPaddle extends PositionComponent
   void update(double dt) {
     super.update(dt);
     final worldRect = gameRef.size.toRect();
-    final ball = gameRef.children.singleWhere((child) => child is Ball) as Ball;
+    final ball = gameRef.children.firstWhere((child) => child is Ball) as Ball;
 
     final ballPositionWrtPaddleWidth = ball.x + (size.x);
     if (ball.y < worldRect.left ||
