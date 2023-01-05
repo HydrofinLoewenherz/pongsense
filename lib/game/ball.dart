@@ -107,7 +107,7 @@ class Ball extends CircleComponent
 
     if (other is PlayerPaddle) {
       final paddleRect = other.paddle.toAbsoluteRect();
-      handleRectCollide(paddleRect, collisionRect)
+      handleRectCollide(paddleRect, collisionRect);
     }
 
     if (other is AIPaddle) {
