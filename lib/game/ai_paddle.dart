@@ -24,6 +24,7 @@ class AIPaddle extends PositionComponent
     );
     paddleHitBox = RectangleHitbox(
       size: size,
+      isSolid: true,
     );
 
     addAll([

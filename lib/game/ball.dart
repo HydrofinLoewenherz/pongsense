@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -11,7 +12,7 @@ import 'package:pongsense/game/pong_game.dart';
 
 const maxGamePause = 0.2;
 
-bool almostEqual(double a, double b, {double confidence = 0.001}) {
+bool almostEqual(double a, double b, {double confidence = 1}) {
   return (a - b).abs() < confidence;
 }
 
@@ -32,6 +33,7 @@ class Ball extends CircleComponent
     _resetBall;
     final hitBox = CircleHitbox(
       radius: radius,
+      isSolid: true,
     );
 
     addAll([hitBox]);
@@ -49,7 +51,7 @@ class Ball extends CircleComponent
   }
 
   double get getSpawnAngle {
-    final sideToThrow = math.Random().nextBool();
+    final sideToThrow = false; // math.Random().nextBool();
 
     final random = math.Random().nextDouble();
     final spawnAngle = sideToThrow
@@ -81,8 +83,8 @@ class Ball extends CircleComponent
     game.add(ParticleSystemComponent(
         particle: ComputedParticle(renderer: (canvas, particle) {
           final paint = Paint()
-            ..color =
-                Color.lerp(Colors.white, Colors.black, particle.progress)!;
+            ..color = Color.lerp(
+                this.paint.color, Colors.transparent, particle.progress)!;
           canvas.drawCircle(Offset.zero, radius, paint);
         }),
         position: position + Vector2(radius, radius)));
@@ -95,6 +97,9 @@ class Ball extends CircleComponent
     PositionComponent other,
   ) {
     super.onCollisionStart(intersectionPoints, other);
+    Rect collisionRect = Rect.fromPoints(
+        intersectionPoints.first.clone().toOffset(),
+        intersectionPoints.last.clone().toOffset());
 
     if (other is ScreenHitbox) {
       handleScreenCollide(intersectionPoints);
@@ -102,16 +107,17 @@ class Ball extends CircleComponent
 
     if (other is PlayerPaddle) {
       final paddleRect = other.paddle.toAbsoluteRect();
-      handleRectCollide(paddleRect, intersectionPoints);
+      handleRectCollide(paddleRect, collisionRect)
     }
 
     if (other is AIPaddle) {
       final paddleRect = other.paddle.toAbsoluteRect();
-      handleRectCollide(paddleRect, intersectionPoints);
+      handleRectCollide(paddleRect, collisionRect);
     }
   }
 
   void handleScreenCollide(final Set<Vector2> collisionPoints) {
+    // TODO use collision rect?
     final worldRect = gameRef.size.toRect();
     final collisionPoint = collisionPoints.first;
 
@@ -125,24 +131,26 @@ class Ball extends CircleComponent
     }
   }
 
-  void handleRectCollide(final Rect rect, final Set<Vector2> collisionPoints) {
-    final collisionPoint = collisionPoints.first;
+  void handleRectCollide(final Rect rect, final Rect collisionRect) {
+    Vector2 nextVelocity = velocity.clone();
 
     // top side collision
-    if (almostEqual(collisionPoint.y, rect.top) && (velocity.y > 0)) {
-      velocity.y = -velocity.y;
+    if (almostEqual(collisionRect.top, rect.top) && (velocity.y > 0)) {
+      nextVelocity.y = -velocity.y;
     }
     // bottom side collision
-    if (almostEqual(collisionPoint.y, rect.bottom) && (velocity.y < 0)) {
-      velocity.y = -velocity.y;
+    if (almostEqual(collisionRect.bottom, rect.bottom) && (velocity.y < 0)) {
+      nextVelocity.y = -velocity.y;
     }
     // left side collision
-    if (almostEqual(collisionPoint.x, rect.left) && (velocity.x > 0)) {
-      velocity.x = -velocity.x;
+    if (almostEqual(collisionRect.left, rect.left) && (velocity.x > 0)) {
+      nextVelocity.x = -velocity.x;
     }
     // right side collision
-    if (almostEqual(collisionPoint.x, rect.right) && (velocity.x < 0)) {
-      velocity.x = -velocity.x;
+    if (almostEqual(collisionRect.right, rect.right) && (velocity.x < 0)) {
+      nextVelocity.x = -velocity.x;
     }
+
+    velocity = nextVelocity;
   }
 }
