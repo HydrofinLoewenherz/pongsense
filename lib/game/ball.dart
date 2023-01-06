@@ -107,13 +107,8 @@ class Ball extends CircleComponent
         return handleRectCollide(collisionRect);
       case AIPaddle:
         return handleRectCollide(collisionRect);
-      default:
-        return;
-    }
-
-    if (other is Blocker) {
-      final blockerRect = other.toAbsoluteRect();
-      handleRectCollide(blockerRect, collisionRect);
+      case Blocker:
+        return handleRectCollide(collisionRect);
     }
   }
 
@@ -126,6 +121,7 @@ class Ball extends CircleComponent
   }
 
   void handleRectCollide(final Rect collisionRect) {
+    // hack to make sure, that ball prefers to bounce up
     if (collisionRect.width > collisionRect.height) {
       velocity.y *= -1;
     } else {
