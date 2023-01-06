@@ -4,6 +4,8 @@ import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flame_audio/audio_pool.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pongsense/esense/sender.dart';
@@ -32,27 +34,47 @@ class PongGame extends FlameGame
     final player = PlayerPaddle(_eSenseManager, _sender);
     final ai = AIPaddle();
 
+    await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
+    final pool = await AudioPool.create("sfx/8-bit-jump-sound.mp3",
+        audioCache: FlameAudio.audioCache, minPlayers: 3, maxPlayers: 4);
+
     addAll(
-      [ScreenHitbox(), Ball(), player, ai],
+      [ScreenHitbox(), player, ai, Ball(pool)],
     );
 
-    final blockerSize = Vector2(20, 20);
-    final gap = 10;
-    final rows = 3;
-    final columns = 10;
-    addAll(List<Blocker>.generate(rows * columns, (index) {
-      final row = index ~/ rows;
-      final col = index % rows;
+    addBlockerGrid(player, ai);
+  }
 
-      return Blocker()
-        ..size = blockerSize
-        ..maxLives = 3
-        ..position = Vector2(
-          lerpDouble(gap, size.x - gap, col / columns)!,
-          lerpDouble(
-              player.y + 2 * player.size.y, ai.y - 2 * ai.size.y, row / rows)!,
-        );
-    }));
+  void addBlockerGrid(PlayerPaddle player, AIPaddle ai) {
+    final blockerSize = Vector2(30, 30);
+    // gap between and around
+    const gap = 10;
+
+    final rows =
+        ((player.y - (ai.y + ai.size.y)) - gap) ~/ (gap + blockerSize.x);
+    final cols = (size.x - gap) ~/ (gap + blockerSize.x);
+
+    final actualGapX = size.x - (gap + cols * (gap + blockerSize.x));
+    final actualGapY =
+        (player.y - (ai.y + ai.size.y)) - (gap + rows * (gap + blockerSize.y));
+
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        if ((row - (rows - 1) / 2).abs() < 1 &&
+            (col - (cols - 1) / 2).abs() < 1) {
+          continue;
+        }
+
+        add(Blocker()
+          ..size = blockerSize
+          ..maxLives = 3
+          ..position = Vector2(actualGapX / 2, actualGapY / 2) +
+              Vector2(
+                gap + col * (gap + blockerSize.x),
+                (ai.y + ai.size.y) + gap + row * (gap + blockerSize.y),
+              ));
+      }
+    }
   }
 
   @override

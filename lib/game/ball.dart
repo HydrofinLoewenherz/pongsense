@@ -1,11 +1,9 @@
-import 'dart:collection';
 import 'dart:math' as math;
-import 'dart:ui';
-import 'dart:async' as async;
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
+import 'package:flame_audio/audio_pool.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/blocker.dart';
@@ -35,13 +33,14 @@ class TraceParticleSystemComponent extends ParticleSystemComponent {
 
 class Ball extends CircleComponent
     with HasGameRef<PongGame>, CollisionCallbacks {
-  Ball() {
+  Ball(AudioPool audioPool) {
+    _audioPool = audioPool;
     paint = Paint()..color = Colors.white;
     radius = _radius;
   }
 
   static const _radius = 10.0;
-  static const speed = 1000.0;
+  static const speed = 100.0;
   static const stepSize = _radius / 4.0;
 
   late Vector2 velocity;
@@ -49,17 +48,17 @@ class Ball extends CircleComponent
   static const degree = math.pi / 180;
   static const nudgeSpeed = 300;
 
+  late AudioPool _audioPool;
+
   @override
-  Future<void> onLoad() {
-    _resetBall();
+  Future<void> onLoad() async {
+    reset();
     add(CircleHitbox(radius: radius, isSolid: true));
     return super.onLoad();
   }
 
-  void _resetBall() {
-    final paddle = gameRef.children.firstWhere((child) => child is PlayerPaddle)
-        as PlayerPaddle;
-    position = paddle.center + (Vector2.zero()..y += paddle.size.y);
+  void reset() {
+    position = (gameRef.size - size) / 2;
     final spawnAngle = calcSpawnAngle(30).degToRad();
     velocity = Vector2(
       math.cos(spawnAngle) * speed,
@@ -68,9 +67,10 @@ class Ball extends CircleComponent
   }
 
   double calcSpawnAngle(double rangeDeg, [double offsetDeg = 0]) {
+    final sideToThrow = math.Random().nextBool();
     final diff = rangeDeg / 2;
     return math.Random().nextDouble().remap(0, 1, 90 - diff, 90 + diff) +
-        (offsetDeg);
+        (offsetDeg + (sideToThrow ? 0 : 180));
   }
 
   @override
@@ -95,6 +95,8 @@ class Ball extends CircleComponent
     PositionComponent other,
   ) {
     super.onCollisionStart(intersectionPoints, other);
+
+    playCollisionSound();
 
     final collisionRect = Rect.fromPoints(
       intersectionPoints.first.toOffset(),
@@ -128,11 +130,11 @@ class Ball extends CircleComponent
     }
     // bottom collision
     if (almostEqual(collisionRect.bottom, worldRect.top)) {
-      _resetBall();
+      reset();
     }
     // top collision
     if (almostEqual(collisionRect.top, worldRect.bottom)) {
-      _resetBall();
+      reset();
     }
   }
 
@@ -157,5 +159,11 @@ class Ball extends CircleComponent
     }
 
     velocity = nextVelocity;
+  }
+
+  void playCollisionSound() {
+    print("now");
+    _audioPool.start();
+    //FlameAudio.play("8-bit-jump-sound.mp3");
   }
 }
