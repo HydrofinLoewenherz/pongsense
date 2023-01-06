@@ -13,6 +13,8 @@ enum _State {
   initialized,
 }
 
+typedef Callback<T> = void Function(T);
+
 class Device {
   static const String deviceName = 'eSense-0320';
   static const Duration requestDelay = Duration(seconds: 1);
@@ -22,6 +24,10 @@ class Device {
   final _manager = ESenseManager(deviceName);
   final _sender = Sender(1000);
 
+  final _eventCallbacks = <Callback<ESenseEvent>>[];
+  final _sensorCallbacks = <Callback<SensorEvent>>[];
+  final _connectionCallbacks = <Callback<ConnectionEvent>>[];
+
   StreamSubscription? _debugEventSub;
   StreamSubscription? _debugSensorSub;
   StreamSubscription? _debugConnectionSub;
@@ -29,6 +35,10 @@ class Device {
   StreamSubscription? _connectionSub;
   StreamSubscription? _eventSub;
   StreamSubscription? _sensorSub;
+
+  StreamSubscription? _callbackConnectionSub;
+  StreamSubscription? _callbackEventSub;
+  StreamSubscription? _callbackSensorSub;
 
   String? _deviceName;
   double? _deviceBatteryVolt;
@@ -44,6 +54,7 @@ class Device {
       Pair('Connected', () => '${_manager.connected}'),
       Pair('Name', () => '$_deviceName'),
       Pair('Config', () => '$_deviceConfig'),
+      Pair('Voltage', () => '${_deviceBatteryVolt}V'),
     ];
 
     var buffer = '';
@@ -52,6 +63,36 @@ class Device {
       buffer += '${getter[i].first}: ${getter[i].second()}';
     }
     return buffer;
+  }
+
+  void registerSensorCallback(Callback<SensorEvent> callback) {
+    _sensorCallbacks.add(callback);
+  }
+
+  void registerEventCallback(Callback<ESenseEvent> callback) {
+    _eventCallbacks.add(callback);
+  }
+
+  void registerConnectionCallback(Callback<ConnectionEvent> callback) {
+    _connectionCallbacks.add(callback);
+  }
+
+  void clearSensorCallbacks() {
+    _sensorCallbacks.clear();
+  }
+
+  void clearEventCallbacks() {
+    _eventCallbacks.clear();
+  }
+
+  void clearConnectionCallbacks() {
+    _connectionCallbacks.clear();
+  }
+
+  static void invokeCallbacks<T>(Iterable<Callback<T>> fns, T event) {
+    for (final fn in fns) {
+      fn(event);
+    }
   }
 
   Future<bool> _askForPermission(Permission permission) async {
@@ -88,39 +129,15 @@ class Device {
     return true;
   }
 
-  /// must only be called at start or after `_disconnect`
   Future<void> _connect() async {
     if (!await _askForPermissions()) {
       throw Exception("permissions not given");
     }
 
-    _debugConnectionSub = _manager.connectionEvents.listen((event) {
-      print('$event');
-    });
-
-    _connectionSub = _manager.connectionEvents.listen((event) {
-      switch (event.type) {
-        case ConnectionType.unknown:
-          assert(true, "encountered unknown state");
-          break;
-        case ConnectionType.connected:
-          // assert(_state == _State.connecting, "invalid state-sequence");
-          _state = _State.connected;
-          break;
-        case ConnectionType.disconnected:
-          // assert(_state == _State.connected || _state == _State.initialized,
-          //     "disconnected from invalid state");
-          _state = _State.waiting;
-          break;
-        case ConnectionType.device_found:
-          // assert(_state == _State.searching, "invalid state-sequence");
-          _state = _State.connecting;
-          break;
-        case ConnectionType.device_not_found:
-          assert(_state == _State.searching, "invalid state-sequence");
-          _state = _State.waiting;
-          break;
-      }
+    _debugConnectionSub = _manager.connectionEvents.listen(print);
+    _connectionSub = _manager.connectionEvents.listen(_onConnectionEvent);
+    _callbackConnectionSub = _manager.connectionEvents.listen((event) {
+      invokeCallbacks(_connectionCallbacks, event);
     });
 
     if (!await _manager.connect()) {
@@ -177,12 +194,18 @@ class Device {
     }
 
     await _connect();
-    _debugEventSub = _manager.eSenseEvents.listen((event) => print('$event'));
+    _debugEventSub = _manager.eSenseEvents.listen(print);
     _eventSub = _manager.eSenseEvents.listen(_onESenseEvent);
+    _callbackEventSub = _manager.eSenseEvents.listen((event) {
+      invokeCallbacks(_eventCallbacks, event);
+    });
 
     await _initialize();
-    _debugSensorSub = _manager.sensorEvents.listen((event) => print('$event'));
-    // _sensorSub = _manager.sensorEvents.listen(_onSensorEvent);
+    _debugSensorSub = _manager.sensorEvents.listen(print);
+    _sensorSub = _manager.sensorEvents.listen(_onSensorEvent);
+    _callbackSensorSub = _manager.sensorEvents.listen((event) {
+      invokeCallbacks(_sensorCallbacks, event);
+    });
 
     return true;
   }
@@ -218,6 +241,48 @@ class Device {
 
   void _onSensorEvent(SensorEvent event) {}
 
+  void _onConnectionEvent(ConnectionEvent event) {
+    switch (event.type) {
+      case ConnectionType.unknown:
+        assert(true, "encountered unknown state");
+        break;
+      case ConnectionType.connected:
+        // assert(_state == _State.connecting, "invalid state-sequence");
+        _state = _State.connected;
+        break;
+      case ConnectionType.disconnected:
+        // assert(_state == _State.connected || _state == _State.initialized,
+        //     "disconnected from invalid state");
+        _state = _State.waiting;
+        break;
+      case ConnectionType.device_found:
+        // assert(_state == _State.searching, "invalid state-sequence");
+        _state = _State.connecting;
+        break;
+      case ConnectionType.device_not_found:
+        assert(_state == _State.searching, "invalid state-sequence");
+        _state = _State.waiting;
+        break;
+    }
+  }
+
+  Future<void> _removeSubscriptions() async {
+    await _debugEventSub?.cancel();
+    await _debugSensorSub?.cancel();
+    await _debugConnectionSub?.cancel();
+    _debugEventSub = _debugSensorSub = _debugConnectionSub = null;
+
+    await _eventSub?.cancel();
+    await _sensorSub?.cancel();
+    await _connectionSub?.cancel();
+    _eventSub = _sensorSub = _connectionSub = null;
+
+    await _callbackEventSub?.cancel();
+    await _callbackSensorSub?.cancel();
+    await _callbackConnectionSub?.cancel();
+    _callbackEventSub = _callbackSensorSub = _callbackConnectionSub = null;
+  }
+
   Future<bool> disconnectAndStopListening() async {
     _deviceBatteryVolt = _deviceConfig = _deviceName = null;
 
@@ -228,15 +293,7 @@ class Device {
       return true;
     }
 
-    await _debugEventSub?.cancel();
-    await _debugSensorSub?.cancel();
-    await _debugConnectionSub?.cancel();
-    _debugEventSub = _debugSensorSub = _debugConnectionSub = null;
-
-    await _eventSub?.cancel();
-    await _sensorSub?.cancel();
-    await _connectionSub?.cancel();
-    _eventSub = _sensorSub = _connectionSub = null;
+    await _removeSubscriptions();
 
     if (!await _disconnect()) {
       throw Exception("couldn't send disconnect request");
