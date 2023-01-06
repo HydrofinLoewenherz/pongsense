@@ -5,7 +5,6 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/math/remap.dart';
 import 'package:pongsense/globals/connection.dart' as g;
@@ -20,10 +19,7 @@ class PlayerPaddle extends PositionComponent
   late Vector2 targetPosition;
 
   bool calibrate = false;
-  bool calibrating = false; // TODO: use this
   Vector3? calibrationNormal;
-  DateTime? _lastValue;
-  int _counter = 0;
 
   @override
   Future<void>? onLoad() {
@@ -53,16 +49,6 @@ class PlayerPaddle extends PositionComponent
           },
         },
         sensorCallback: ((event) {
-          final now = DateTime.now();
-          if (_lastValue != null) {
-            if (_counter < 10) {
-              _counter += 1;
-            } else {
-              _counter = 0;
-              print('delay ${now.difference(_lastValue!).inMilliseconds}ms');
-            }
-          }
-          _lastValue = now;
           final accRange = g.device.deviceConfig?.accRange;
           if (accRange == null) {
             return false;
@@ -87,7 +73,7 @@ class PlayerPaddle extends PositionComponent
   void calcTarget(Vector3 accel) {
     final calibrationNormal = this.calibrationNormal;
     if (calibrationNormal == null) {
-      // print("skipping calc target, not calibrated");
+      print("skipping calc target, not calibrated");
       return;
     }
 
