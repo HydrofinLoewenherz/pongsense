@@ -31,6 +31,11 @@ class PongGame extends FlameGame
   int playerMaxHealth = 3;
   late int playerHealth = playerMaxHealth;
 
+  late final PlayerPaddle player;
+  late final AIPaddle ai;
+  late final List<Blocker> blocker;
+  late final Ball ball;
+
   PongGame(final ESenseManager eSenseManager, final Sender sender) {
     _sender = sender;
     _eSenseManager = eSenseManager;
@@ -38,26 +43,33 @@ class PongGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    final player = PlayerPaddle(_eSenseManager, _sender);
-    final ai = AIPaddle();
+    player = PlayerPaddle(_eSenseManager, _sender);
+    ai = AIPaddle();
+    ball = Ball();
 
     await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
 
     addAll(
-      [ScreenHitbox(), player, ai, Ball(), PlayerHealth()],
+      [ScreenHitbox(), player, ai, ball, PlayerHealth()],
     );
 
+    blocker = addBlockers(player, ai);
+    addAll(blocker);
+  }
+
+  List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
     final gridPadding = Vector2(10, size.y * 0.1);
     final aiBottom = ai.paddle.toAbsoluteRect().bottom;
     final playerTop = player.paddle.toAbsoluteRect().top;
-    addBlockerGrid(Rect.fromPoints(
+    return addBlockerGrid(Rect.fromPoints(
       Offset(gridPadding.x, aiBottom + gridPadding.y),
       Offset(size.x - gridPadding.x, playerTop - gridPadding.y),
     ));
   }
 
-  void addBlockerGrid(Rect area, {double gap = 10.0, double emptyRad = 100}) {
-    return;
+  List<Blocker> addBlockerGrid(Rect area,
+      {double gap = 10.0, double emptyRad = 100}) {
+    List<Blocker> blockers = [];
 
     final blockerSize = Vector2(30, 30);
     final emptyRect =
@@ -83,9 +95,10 @@ class PongGame extends FlameGame
           continue;
         }
 
-        add(blocker);
+        blockers.add(blocker);
       }
     }
+    return blockers;
   }
 
   void damagePlayer({int amount = 1}) {
@@ -102,8 +115,18 @@ class PongGame extends FlameGame
   }
 
   void reset() {
-    // TODO implement me!
-    print("reset");
+    score = 0;
+    playerHealth = playerMaxHealth;
+    for (var b in blocker) {
+      b.reset();
+      if (b.parent == null) {
+        add(b);
+      }
+    }
+    ball.reset();
+
+    overlays.remove(endOverlayIdentifier);
+    resumeEngine();
   }
 
   void togglePause() {

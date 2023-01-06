@@ -23,15 +23,24 @@ class Blocker extends RectangleComponent
   }
 
   @override
+  void update(double dt) {
+    paint.color = Color.lerp(Colors.red, Colors.green, lives / maxLives)!;
+
+    super.update(dt);
+  }
+
+  @override
   void onCollisionEnd(PositionComponent other) {
     super.onCollisionEnd(other);
 
     lives--;
 
-    paint.color = Color.lerp(Colors.red, Colors.green, lives / maxLives)!;
-
     if (lives == 0) {
       removeFromParent();
     }
+  }
+
+  reset() {
+    lives = maxLives;
   }
 }
