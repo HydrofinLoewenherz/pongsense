@@ -56,18 +56,22 @@ class Ball extends CircleComponent
 
   void reset() {
     position = (gameRef.size - size) / 2;
-    final spawnAngle = calcSpawnAngle(30).degToRad();
+    final spawnAngle = calcSpawnAngle(45, gapDeg: 15).degToRad();
     velocity = Vector2(
       math.cos(spawnAngle) * speed,
       math.sin(spawnAngle) * speed,
     );
   }
 
-  double calcSpawnAngle(double rangeDeg, [double offsetDeg = 0]) {
-    final sideToThrow = math.Random().nextBool();
+  double calcSpawnAngle(double rangeDeg,
+      {double offsetDeg = 0, double gapDeg = 0}) {
+    final upDown = math.Random().nextBool();
     final diff = rangeDeg / 2;
-    return math.Random().nextDouble().remap(0, 1, 90 - diff, 90 + diff) +
-        (offsetDeg + (sideToThrow ? 0 : 180));
+    var randDeg = math.Random().nextDouble().remap(0, 1, -diff, diff);
+    if (randDeg.abs() < (gapDeg / 2)) {
+      randDeg += randDeg.sign * (gapDeg / 2);
+    }
+    return randDeg + 90 + (upDown ? 0 : 180) + offsetDeg;
   }
 
   @override
