@@ -30,12 +30,6 @@ class PongGame extends FlameGame
       [
         ScreenHitbox(),
         Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
         PlayerPaddle(_eSenseManager, _sender),
         AIPaddle()
       ],
