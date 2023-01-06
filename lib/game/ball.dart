@@ -16,14 +16,20 @@ bool almostEqual(double a, double b, {double confidence = 1}) {
   return (a - b).abs() < confidence;
 }
 
-class TraceComputedParticle extends ComputedParticle {
-  final Vector2 moveDiff;
+class TraceParticleSystemComponent extends ParticleSystemComponent {
+  static Paint paint(Particle p) => Paint()
+    ..color = Colors.white.withOpacity(p.progress.remap(1, 0, 0, 0.2))
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1;
 
-  TraceComputedParticle({
-    required super.renderer,
-    required this.moveDiff,
-    super.lifespan,
-  });
+  TraceParticleSystemComponent(Vector2 position, double radius, double lifespan)
+      : super(
+            position: position + Vector2(radius, radius),
+            particle: ComputedParticle(
+                lifespan: lifespan,
+                renderer: (canvas, particle) {
+                  canvas.drawCircle(Offset.zero, radius, paint(particle));
+                }));
 }
 
 class Ball extends CircleComponent
@@ -51,11 +57,11 @@ class Ball extends CircleComponent
 
   void _resetBall() {
     position = gameRef.size / 2;
-    final spawnAngle = calcSpawnAngle(4, -50);
-
-    final vx = math.cos(spawnAngle * degree) * speed;
-    final vy = math.sin(spawnAngle * degree) * speed;
-    velocity = Vector2(vx, vy);
+    final spawnAngle = calcSpawnAngle(30).degToRad();
+    velocity = Vector2(
+      math.cos(spawnAngle) * speed,
+      math.sin(spawnAngle) * speed,
+    );
   }
 
   double calcSpawnAngle(double rangeDeg, [double offsetDeg = 0]) {
@@ -71,23 +77,13 @@ class Ball extends CircleComponent
 
     final steps = ((velocity * dt).length / stepSize).ceil();
 
+    var particles = <TraceParticleSystemComponent>[];
     for (int i = 0; i < steps; i += 1) {
+      particles.add(TraceParticleSystemComponent(position, _radius, 0.7));
       position += velocity.normalized() * stepSize;
       game.collisionDetection.run();
-
-      game.add(ParticleSystemComponent(
-          particle: ComputedParticle(
-              lifespan: .6,
-              renderer: (canvas, particle) {
-                final paint = Paint()
-                  ..color = Color.lerp(this.paint.color.withOpacity(0.2),
-                      Colors.transparent, particle.progress)!
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = 1;
-                canvas.drawCircle(Offset.zero, radius, paint);
-              }),
-          position: position + Vector2(radius, radius)));
     }
+    game.addAll(particles);
   }
 
   @override
