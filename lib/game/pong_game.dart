@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -10,7 +12,11 @@ import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/ball.dart';
 import 'package:pongsense/game/blocker.dart';
+import 'package:pongsense/game/player_health.dart';
 import 'package:pongsense/game/player_paddle.dart';
+
+const pauseOverlayIdentifier = "PauseOverlay";
+const endOverlayIdentifier = "EndOverlay";
 
 class PongGame extends FlameGame
     with
@@ -20,6 +26,10 @@ class PongGame extends FlameGame
         HasESenseHandlerComponents {
   late final Sender _sender;
   late final ESenseManager _eSenseManager;
+
+  double score = 0;
+  int playerMaxHealth = 3;
+  late int playerHealth = playerMaxHealth;
 
   PongGame(final ESenseManager eSenseManager, final Sender sender) {
     _sender = sender;
@@ -34,7 +44,7 @@ class PongGame extends FlameGame
     await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
 
     addAll(
-      [ScreenHitbox(), player, ai, Ball()],
+      [ScreenHitbox(), player, ai, Ball(), PlayerHealth()],
     );
 
     final gridPadding = Vector2(10, size.y * 0.1);
@@ -47,6 +57,8 @@ class PongGame extends FlameGame
   }
 
   void addBlockerGrid(Rect area, {double gap = 10.0, double emptyRad = 100}) {
+    return;
+
     final blockerSize = Vector2(30, 30);
     final emptyRect =
         Rect.fromCenter(center: area.center, width: emptyRad, height: emptyRad);
@@ -76,6 +88,38 @@ class PongGame extends FlameGame
     }
   }
 
+  void damagePlayer({int amount = 1}) {
+    playerHealth = max(0, playerHealth - amount);
+
+    if (playerHealth == 0) {
+      pauseEngine();
+      overlays.add(endOverlayIdentifier);
+    }
+  }
+
+  void healPlayer({int amount = 1}) {
+    playerHealth = min(playerHealth + amount, playerMaxHealth);
+  }
+
+  void reset() {
+    // TODO implement me!
+    print("reset");
+  }
+
+  void togglePause() {
+    if (overlays.isActive(endOverlayIdentifier)) {
+      return;
+    }
+
+    if (overlays.isActive(pauseOverlayIdentifier)) {
+      overlays.remove(pauseOverlayIdentifier);
+      resumeEngine();
+    } else {
+      overlays.add(pauseOverlayIdentifier);
+      pauseEngine();
+    }
+  }
+
   @override
   @mustCallSuper
   KeyEventResult onKeyEvent(
@@ -92,5 +136,12 @@ class PongGame extends FlameGame
     super.onESenseEvent(event);
 
     return ESenseEventResult.handled;
+  }
+
+  @override
+  void onLongTapDown(int pointerId, TapDownInfo info) {
+    super.onLongTapDown(pointerId, info);
+
+    togglePause();
   }
 }

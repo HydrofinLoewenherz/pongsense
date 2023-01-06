@@ -7,6 +7,7 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/blocker.dart';
+import 'package:pongsense/game/player_health.dart';
 import 'package:pongsense/game/player_paddle.dart';
 import 'package:pongsense/game/pong_game.dart';
 import 'package:pongsense/math/remap.dart';
@@ -39,7 +40,7 @@ class Ball extends CircleComponent
   }
 
   static const _radius = 10.0;
-  static const speed = 100.0;
+  static const speed = 1000.0;
   static const stepSize = _radius / 4.0;
 
   late Vector2 velocity;
@@ -129,12 +130,14 @@ class Ball extends CircleComponent
     if (almostEqual(collisionRect.left, worldRect.right)) {
       velocity.x *= -1;
     }
-    // bottom collision
+    // top collision
     if (almostEqual(collisionRect.bottom, worldRect.top)) {
+      gameRef.healPlayer();
       reset();
     }
-    // top collision
+    // bottom collision
     if (almostEqual(collisionRect.top, worldRect.bottom)) {
+      gameRef.damagePlayer();
       reset();
     }
   }
