@@ -7,6 +7,7 @@ import 'package:flame/input.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ai_paddle.dart';
@@ -14,6 +15,7 @@ import 'package:pongsense/game/ball.dart';
 import 'package:pongsense/game/blocker.dart';
 import 'package:pongsense/game/player_health.dart';
 import 'package:pongsense/game/player_paddle.dart';
+import 'package:pongsense/globals/connection.dart' as g;
 
 const pauseOverlayIdentifier = "PauseOverlay";
 const endOverlayIdentifier = "EndOverlay";
@@ -31,6 +33,10 @@ class PongGame extends FlameGame
   int playerMaxHealth = 3;
   late int playerHealth = playerMaxHealth;
 
+  Closer? _stateCallbackCloser;
+  Closer? _eventCallbackCloser;
+  Closer? _sensorCallbackCloser;
+
   late final PlayerPaddle player;
   late final AIPaddle ai;
   late final List<Blocker> blocker;
@@ -42,7 +48,27 @@ class PongGame extends FlameGame
   }
 
   @override
+  void onRemove() {
+    _stateCallbackCloser?.call();
+    _eventCallbackCloser?.call();
+    _sensorCallbackCloser?.call();
+    super.onRemove();
+  }
+
+  @override
   Future<void> onLoad() async {
+    _stateCallbackCloser = g.device.registerStateCallback((state) {
+      if (state == DeviceState.waiting) {
+        togglePause();
+      }
+    });
+    _sensorCallbackCloser = g.device.registerSensorCallback((event) {
+      onSensorEvent(event);
+    });
+    _eventCallbackCloser = g.device.registerEventCallback((event) {
+      onESenseEvent(event);
+    });
+
     player = PlayerPaddle(_eSenseManager, _sender);
     ai = AIPaddle();
     ball = Ball();
@@ -141,24 +167,6 @@ class PongGame extends FlameGame
       overlays.add(pauseOverlayIdentifier);
       pauseEngine();
     }
-  }
-
-  @override
-  @mustCallSuper
-  KeyEventResult onKeyEvent(
-    RawKeyEvent event,
-    Set<LogicalKeyboardKey> keysPressed,
-  ) {
-    super.onKeyEvent(event, keysPressed);
-    return KeyEventResult.handled;
-  }
-
-  @override
-  @mustCallSuper
-  ESenseEventResult onESenseEvent(ESenseEvent event) {
-    super.onESenseEvent(event);
-
-    return ESenseEventResult.handled;
   }
 
   @override
