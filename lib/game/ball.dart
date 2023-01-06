@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/game/ai_paddle.dart';
+import 'package:pongsense/game/blocker.dart';
 import 'package:pongsense/game/player_paddle.dart';
 import 'package:pongsense/game/pong_game.dart';
 
@@ -113,6 +114,11 @@ class Ball extends CircleComponent
     if (other is AIPaddle) {
       final paddleRect = other.paddle.toAbsoluteRect();
       handleRectCollide(paddleRect, collisionRect);
+    }
+
+    if (other is Blocker) {
+      final blockerRect = other.toAbsoluteRect();
+      handleRectCollide(blockerRect, collisionRect);
     }
   }
 

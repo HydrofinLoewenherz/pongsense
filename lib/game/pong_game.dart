@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -8,6 +10,7 @@ import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/ball.dart';
+import 'package:pongsense/game/blocker.dart';
 import 'package:pongsense/game/player_paddle.dart';
 
 class PongGame extends FlameGame
@@ -30,16 +33,22 @@ class PongGame extends FlameGame
       [
         ScreenHitbox(),
         Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
-        Ball(),
         PlayerPaddle(_eSenseManager, _sender),
         AIPaddle()
       ],
     );
+
+    final blockerSize = Vector2(20, 20);
+    addAll(List<Blocker>.generate(
+        30,
+        (index) => Blocker()
+          ..size = blockerSize
+          ..maxLives = 3
+          ..position = Vector2(
+            lerpDouble(0, size.x - blockerSize.x, (index % 10) / 10)!,
+            lerpDouble(
+                size.y / 2 + 80, size.y * 0.9 - 10, (index / 10) / 10.0)!,
+          )));
   }
 
   @override
