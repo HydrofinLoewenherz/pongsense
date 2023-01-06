@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:esense_flutter/esense.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pongsense/esense/sender.dart';
+import 'package:pongsense/util/pair.dart';
 
 enum _State {
   waiting,
@@ -26,16 +27,32 @@ class Device {
   StreamSubscription? _debugConnectionSub;
 
   StreamSubscription? _connectionSub;
+  StreamSubscription? _eventSub;
+  StreamSubscription? _sensorSub;
 
   String? _deviceName;
+  double? _deviceBatteryVolt;
   ESenseConfig? _deviceConfig;
-  ConnectionType? _connectionStatus;
 
   _State _state = _State.waiting;
 
   @override
-  String toString() =>
-      'State: ${_state.name}, Subbed: ${_connectionSub != null}, Connected: ${_manager.connected}';
+  String toString() {
+    final getter = <Pair<String, String Function()>>[
+      Pair('State', () => _state.name),
+      Pair('Subbed', () => '${_connectionSub != null}'),
+      Pair('Connected', () => '${_manager.connected}'),
+      Pair('Name', () => '$_deviceName'),
+      Pair('Config', () => '$_deviceConfig'),
+    ];
+
+    var buffer = '';
+    for (var i = 0; i < getter.length; i += 1) {
+      if (i > 0) buffer += '\n';
+      buffer += '${getter[i].first}: ${getter[i].second()}';
+    }
+    return buffer;
+  }
 
   Future<bool> _askForPermission(Permission permission) async {
     return await permission.request().isGranted;
@@ -49,6 +66,7 @@ class Device {
       () async => await _manager.setSamplingRate(samplingRate),
       () async => await _manager.getDeviceName(),
       () async => await _manager.getSensorConfig(),
+      () async => await _manager.getBatteryVoltage(),
     ];
     for (final req in queue) {
       if (!await req()) {
@@ -56,35 +74,46 @@ class Device {
       }
       await Future.delayed(requestDelay);
     }
+
+    for (;;) {
+      if (_deviceName == null ||
+          _deviceConfig == null ||
+          _deviceBatteryVolt == null) {
+        await Future.delayed(requestDelay);
+        continue;
+      }
+      break;
+    }
+
     return true;
   }
 
+  /// must only be called at start or after `_disconnect`
   Future<void> _connect() async {
     if (!await _askForPermissions()) {
       throw Exception("permissions not given");
     }
 
-    if (_connectionSub != null) {
-      await _connectionSub!.cancel();
-      _connectionSub = null;
-    }
+    _debugConnectionSub = _manager.connectionEvents.listen((event) {
+      print('$event');
+    });
 
     _connectionSub = _manager.connectionEvents.listen((event) {
       switch (event.type) {
         case ConnectionType.unknown:
-          assert(false, "encountered unknown state");
+          assert(true, "encountered unknown state");
           break;
         case ConnectionType.connected:
-          assert(_state == _State.connecting, "invalid state-sequence");
+          // assert(_state == _State.connecting, "invalid state-sequence");
           _state = _State.connected;
           break;
         case ConnectionType.disconnected:
-          assert(_state == _State.connected || _state == _State.initialized,
-              "disconnected from invalid state");
+          // assert(_state == _State.connected || _state == _State.initialized,
+          //     "disconnected from invalid state");
           _state = _State.waiting;
           break;
         case ConnectionType.device_found:
-          assert(_state == _State.searching, "invalid state-sequence");
+          // assert(_state == _State.searching, "invalid state-sequence");
           _state = _State.connecting;
           break;
         case ConnectionType.device_not_found:
@@ -97,10 +126,10 @@ class Device {
     if (!await _manager.connect()) {
       throw Exception("couldn't start looking for device");
     }
+
     _state = _State.searching;
 
     for (;;) {
-      await Future.delayed(connectionDelay);
       switch (_state) {
         case _State.waiting:
           if (!await _manager.connect()) {
@@ -117,10 +146,17 @@ class Device {
         case _State.initialized:
           throw Exception("initialized-state while connecting");
       }
+      await Future.delayed(connectionDelay);
     }
   }
 
   Future<bool> _disconnect() async {
+    if (_state != _State.initialized &&
+        _state != _State.connected &&
+        _state != _State.connecting) {
+      throw Exception("not connected");
+    }
+
     return await _manager.disconnect();
   }
 
@@ -140,42 +176,73 @@ class Device {
       throw Exception("already connecting");
     }
 
-    if (_debugEventSub != null ||
-        _debugSensorSub != null ||
-        _debugConnectionSub != null) {
-      await disconnectAndStopListening();
-    }
-
-    _debugConnectionSub = _manager.connectionEvents.listen((event) => print);
     await _connect();
+    _debugEventSub = _manager.eSenseEvents.listen((event) => print('$event'));
+    _eventSub = _manager.eSenseEvents.listen(_onESenseEvent);
 
-    _debugEventSub = _manager.eSenseEvents.listen((event) => print);
-    _debugSensorSub = _manager.sensorEvents.listen((event) => print);
     await _initialize();
+    _debugSensorSub = _manager.sensorEvents.listen((event) => print('$event'));
+    // _sensorSub = _manager.sensorEvents.listen(_onSensorEvent);
 
     return true;
   }
 
+  void _onESenseEvent(ESenseEvent event_) {
+    switch (event_.runtimeType) {
+      case RegisterListenerEvent:
+        final _ = event_ as RegisterListenerEvent;
+        break;
+      case DeviceNameRead:
+        final e = event_ as DeviceNameRead;
+        _deviceName = e.deviceName;
+        break;
+      case BatteryRead:
+        final e = event_ as BatteryRead;
+        _deviceBatteryVolt = e.voltage;
+        break;
+      case AccelerometerOffsetRead:
+        final _ = event_ as AccelerometerOffsetRead;
+        break;
+      case AdvertisementAndConnectionIntervalRead:
+        final _ = event_ as AdvertisementAndConnectionIntervalRead;
+        break;
+      case ButtonEventChanged:
+        final _ = event_ as ButtonEventChanged;
+        break;
+      case SensorConfigRead:
+        final e = event_ as SensorConfigRead;
+        _deviceConfig = e.config;
+        break;
+    }
+  }
+
+  void _onSensorEvent(SensorEvent event) {}
+
   Future<bool> disconnectAndStopListening() async {
+    _deviceBatteryVolt = _deviceConfig = _deviceName = null;
+
     if (_state != _State.initialized &&
         _state != _State.connected &&
         _state != _State.connecting) {
-      throw Exception("not connected");
+      _state = _State.waiting;
+      return true;
     }
 
     await _debugEventSub?.cancel();
     await _debugSensorSub?.cancel();
     await _debugConnectionSub?.cancel();
-    await _connectionSub?.cancel();
     _debugEventSub = _debugSensorSub = _debugConnectionSub = null;
-    _connectionSub = null;
+
+    await _eventSub?.cancel();
+    await _sensorSub?.cancel();
+    await _connectionSub?.cancel();
+    _eventSub = _sensorSub = _connectionSub = null;
 
     if (!await _disconnect()) {
       throw Exception("couldn't send disconnect request");
     }
 
     _state = _State.waiting;
-
     return true;
   }
 }

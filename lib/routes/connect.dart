@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 
@@ -9,8 +11,23 @@ class ConnectScreen extends StatefulWidget {
 }
 
 class ConnectScreenState extends State<ConnectScreen> {
+  Timer? _timer;
+  String _state = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 250), (timer) {
+      setState(() {
+        _state = g.device.toString();
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _timer?.cancel();
+    _timer = null;
     super.dispose();
   }
 
@@ -33,13 +50,17 @@ class ConnectScreenState extends State<ConnectScreen> {
       ),
       body: Column(
         children: [
+          Text(_state),
           ElevatedButton(
               onPressed: () {
-                setState(() {
-                  g.connectionState += 'hi';
-                });
+                g.device.connectAndStartListening();
               },
-              child: Text('State: ${g.connectionState}')),
+              child: const Text('Connect')),
+          ElevatedButton(
+              onPressed: () {
+                g.device.disconnectAndStopListening();
+              },
+              child: const Text('Disconnect')),
         ],
       ),
     );
