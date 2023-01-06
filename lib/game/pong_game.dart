@@ -4,6 +4,8 @@ import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flame_audio/audio_pool.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pongsense/esense/sender.dart';
@@ -32,8 +34,12 @@ class PongGame extends FlameGame
     final player = PlayerPaddle(_eSenseManager, _sender);
     final ai = AIPaddle();
 
+    await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
+    final pool = await AudioPool.create("sfx/8-bit-jump-sound.mp3",
+        audioCache: FlameAudio.audioCache, minPlayers: 3, maxPlayers: 4);
+
     addAll(
-      [ScreenHitbox(), player, ai, Ball()],
+      [ScreenHitbox(), player, ai, Ball(pool)],
     );
 
     addBlockerGrid(player, ai);
