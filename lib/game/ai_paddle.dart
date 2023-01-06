@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -8,7 +10,7 @@ class AIPaddle extends PositionComponent
     with HasGameRef<FlameGame>, CollisionCallbacks, KeyboardHandler {
   late final RectangleHitbox paddleHitBox;
   late final RectangleComponent paddle;
-  final double speed = 400;
+  final double speed = 100;
 
   @override
   Future<void>? onLoad() {
@@ -41,18 +43,12 @@ class AIPaddle extends PositionComponent
     final worldRect = gameRef.size.toRect();
     final ball = gameRef.children.firstWhere((child) => child is Ball) as Ball;
 
-    final ballPositionWrtPaddleWidth = ball.x + (size.x);
-    if (ball.y < worldRect.left ||
-        ballPositionWrtPaddleWidth > worldRect.right) {
-      return;
+    if (ball.center.x > center.x) {
+      position.x = min(position.x + (speed * dt), worldRect.right - size.x);
     }
 
-    if (ball.x > position.x) {
-      position.x += (speed * dt);
-    }
-
-    if (ball.x < position.x) {
-      position.x -= (speed * dt);
+    if (ball.center.x < center.x) {
+      position.x = max(0, position.x - (speed * dt));
     }
   }
 }
