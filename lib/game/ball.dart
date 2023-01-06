@@ -41,7 +41,7 @@ class Ball extends CircleComponent
   }
 
   static const _radius = 10.0;
-  static const speed = 400.0;
+  static const speed = 1000.0;
   static const stepSize = _radius / 4.0;
 
   late Vector2 velocity;
@@ -104,28 +104,57 @@ class Ball extends CircleComponent
       case ScreenHitbox:
         return handleScreenCollide(collisionRect);
       case PlayerPaddle:
-        return handleRectCollide(collisionRect);
+        return handleRectCollide(
+            collisionRect, (other as PlayerPaddle).paddle.toAbsoluteRect());
       case AIPaddle:
-        return handleRectCollide(collisionRect);
+        return handleRectCollide(
+            collisionRect, (other as AIPaddle).paddle.toAbsoluteRect());
       case Blocker:
-        return handleRectCollide(collisionRect);
+        return handleRectCollide(collisionRect, other.toAbsoluteRect());
     }
   }
 
   void handleScreenCollide(final Rect collisionRect) {
-    if (collisionRect.width > collisionRect.height) {
-      _resetBall();
-    } else {
+    final worldRect = gameRef.size.toRect();
+
+    // left side collision
+    if (almostEqual(collisionRect.right, worldRect.left)) {
       velocity.x *= -1;
+    }
+    // right side collision
+    if (almostEqual(collisionRect.left, worldRect.right)) {
+      velocity.x *= -1;
+    }
+    // bottom collision
+    if (almostEqual(collisionRect.bottom, worldRect.top)) {
+      _resetBall();
+    }
+    // top collision
+    if (almostEqual(collisionRect.top, worldRect.bottom)) {
+      _resetBall();
     }
   }
 
-  void handleRectCollide(final Rect collisionRect) {
-    // hack to make sure, that ball prefers to bounce up
-    if (collisionRect.width > collisionRect.height) {
-      velocity.y *= -1;
-    } else {
-      velocity.x *= -1;
+  void handleRectCollide(final Rect collisionRect, Rect other) {
+    Vector2 nextVelocity = velocity.clone();
+
+    // top side collision
+    if (almostEqual(collisionRect.top, other.top) && (velocity.y > 0)) {
+      nextVelocity.y = -velocity.y;
     }
+    // bottom side collision
+    if (almostEqual(collisionRect.bottom, other.bottom) && (velocity.y < 0)) {
+      nextVelocity.y = -velocity.y;
+    }
+    // left side collision
+    if (almostEqual(collisionRect.left, other.left) && (velocity.x > 0)) {
+      nextVelocity.x = -velocity.x;
+    }
+    // right side collision
+    if (almostEqual(collisionRect.right, other.right) && (velocity.x < 0)) {
+      nextVelocity.x = -velocity.x;
+    }
+
+    velocity = nextVelocity;
   }
 }
