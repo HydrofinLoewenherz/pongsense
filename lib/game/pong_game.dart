@@ -35,11 +35,9 @@ class PongGame extends FlameGame
     final ai = AIPaddle();
 
     await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
-    final pool = await AudioPool.create("sfx/8-bit-jump-sound.mp3",
-        audioCache: FlameAudio.audioCache, minPlayers: 3, maxPlayers: 4);
 
     addAll(
-      [ScreenHitbox(), player, ai, Ball(pool)],
+      [ScreenHitbox(), player, ai, Ball()],
     );
 
     addBlockerGrid(player, ai);

@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/particles.dart';
-import 'package:flame_audio/audio_pool.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/blocker.dart';
@@ -33,8 +33,7 @@ class TraceParticleSystemComponent extends ParticleSystemComponent {
 
 class Ball extends CircleComponent
     with HasGameRef<PongGame>, CollisionCallbacks {
-  Ball(AudioPool audioPool) {
-    _audioPool = audioPool;
+  Ball() {
     paint = Paint()..color = Colors.white;
     radius = _radius;
   }
@@ -47,8 +46,6 @@ class Ball extends CircleComponent
 
   static const degree = math.pi / 180;
   static const nudgeSpeed = 300;
-
-  late AudioPool _audioPool;
 
   @override
   Future<void> onLoad() async {
@@ -162,8 +159,6 @@ class Ball extends CircleComponent
   }
 
   void playCollisionSound() {
-    print("now");
-    _audioPool.start();
-    //FlameAudio.play("8-bit-jump-sound.mp3");
+    FlameAudio.play("sfx/8-bit-jump-sound.mp3");
   }
 }
