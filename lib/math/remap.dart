@@ -58,8 +58,8 @@ extension Remap on num {
 
 extension RemapDegRad on num {
   /// Convert an angle in degree to an angle in radians
-  double degToRad() => this * (180.0 / pi);
+  double degToRad() => this * (pi / 180.0);
 
   /// Convert an angle in radians to an angle in degree
-  double radToDeg() => this * (pi / 180.0);
+  double radToDeg() => this * (180.0 / pi);
 }
