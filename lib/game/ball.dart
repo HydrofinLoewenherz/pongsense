@@ -51,15 +51,15 @@ class Ball extends CircleComponent
 
   @override
   Future<void> onLoad() {
-    _resetBall();
+    reset();
     add(CircleHitbox(radius: radius, isSolid: true));
     return super.onLoad();
   }
 
-  void _resetBall() {
-    final paddle = gameRef.children.firstWhere((child) => child is PlayerPaddle)
-        as PlayerPaddle;
-    position = paddle.center + (Vector2.zero()..y += paddle.size.y);
+  void reset() {
+    position = (gameRef.size.clone())
+      ..x *= 0.5
+      ..y *= 0.8;
     final spawnAngle = calcSpawnAngle(30).degToRad();
     velocity = Vector2(
       math.cos(spawnAngle) * speed,
@@ -70,7 +70,7 @@ class Ball extends CircleComponent
   double calcSpawnAngle(double rangeDeg, [double offsetDeg = 0]) {
     final diff = rangeDeg / 2;
     return math.Random().nextDouble().remap(0, 1, 90 - diff, 90 + diff) +
-        (offsetDeg);
+        (offsetDeg + 180);
   }
 
   @override
@@ -128,11 +128,11 @@ class Ball extends CircleComponent
     }
     // bottom collision
     if (almostEqual(collisionRect.bottom, worldRect.top)) {
-      _resetBall();
+      reset();
     }
     // top collision
     if (almostEqual(collisionRect.top, worldRect.bottom)) {
-      _resetBall();
+      reset();
     }
   }
 

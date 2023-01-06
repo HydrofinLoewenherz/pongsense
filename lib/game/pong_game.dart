@@ -33,26 +33,27 @@ class PongGame extends FlameGame
     final ai = AIPaddle();
 
     addAll(
-      [ScreenHitbox(), Ball(), player, ai],
+      [ScreenHitbox(), player, ai, Ball()],
     );
 
-    final blockerSize = Vector2(20, 20);
-    final gap = 10;
-    final rows = 3;
-    final columns = 10;
-    addAll(List<Blocker>.generate(rows * columns, (index) {
-      final row = index ~/ rows;
-      final col = index % rows;
+    final blockerSize = Vector2(30, 30);
+    const gap = 10;
+    final rows =
+        ((player.y - (ai.y + ai.size.y)) - gap) ~/ (gap + blockerSize.x);
+    final cols = (size.x - gap) ~/ (gap + blockerSize.x);
 
-      return Blocker()
-        ..size = blockerSize
-        ..maxLives = 3
-        ..position = Vector2(
-          lerpDouble(gap, size.x - gap, col / columns)!,
-          lerpDouble(
-              player.y + 2 * player.size.y, ai.y - 2 * ai.size.y, row / rows)!,
-        );
-    }));
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        add(Blocker()
+          ..size = blockerSize
+          ..maxLives = 3
+          // TODO center grid
+          ..position = Vector2(
+            gap + col * (gap + blockerSize.x),
+            (ai.y + ai.size.y) + gap + row * (gap + blockerSize.y),
+          ));
+      }
+    }
   }
 
   @override
