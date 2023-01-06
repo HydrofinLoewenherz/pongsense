@@ -40,15 +40,17 @@ class PongGame extends FlameGame
   late final Ball ball;
 
   @override
-  void onRemove() {
+  void onDetach() {
     _stateCallbackCloser?.call();
     _eventCallbackCloser?.call();
     _sensorCallbackCloser?.call();
-    super.onRemove();
+    super.onDetach();
   }
 
   @override
-  Future<void> onLoad() async {
+  void onAttach() {
+    super.onAttach();
+
     _stateCallbackCloser = g.device.registerStateCallback((state) {
       if (state == DeviceState.waiting) {
         togglePause();
@@ -60,7 +62,10 @@ class PongGame extends FlameGame
     _eventCallbackCloser = g.device.registerEventCallback((event) {
       onESenseEvent(event);
     });
+  }
 
+  @override
+  Future<void> onLoad() async {
     player = PlayerPaddle();
     ai = AIPaddle();
     ball = Ball();

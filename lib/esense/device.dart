@@ -86,7 +86,7 @@ class Device {
   String toString() {
     final getter = <Pair<String, String Function()>>[
       Pair('State', () => __state.name),
-      Pair('Connected', () => '${_manager.connected}'),
+      Pair('MgrConnected', () => '${_manager.connected}'),
       Pair('Name', () => '$_deviceName'),
       Pair('Config', () => _formatConfig(_deviceConfig)),
       Pair('Voltage', () => '${_deviceBatteryVolt}V'),

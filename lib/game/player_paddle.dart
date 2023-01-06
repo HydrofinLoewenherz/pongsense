@@ -19,7 +19,6 @@ class PlayerPaddle extends PositionComponent
 
   late Vector2 targetPosition;
 
-  ESenseConfig? eSenseConfig;
   bool calibrate = false;
   bool calibrating = false; // TODO: use this
   Vector3? calibrationNormal;
@@ -52,11 +51,6 @@ class PlayerPaddle extends PositionComponent
             calibrate = true;
             return true;
           },
-          SensorConfigRead: (event) {
-            var read = (event as SensorConfigRead);
-            eSenseConfig = read.config;
-            return true;
-          }
         },
         sensorCallback: ((event) {
           final now = DateTime.now();
@@ -69,8 +63,7 @@ class PlayerPaddle extends PositionComponent
             }
           }
           _lastValue = now;
-
-          final accRange = eSenseConfig?.accRange;
+          final accRange = g.device.deviceConfig?.accRange;
           if (accRange == null) {
             return false;
           }

@@ -79,6 +79,10 @@ class Ball extends CircleComponent
   void update(double dt) {
     super.update(dt);
 
+    if (dt > 1) {
+      return;
+    }
+
     final steps = ((velocity * dt).length / stepSize).ceil();
 
     var particles = <TraceParticleSystemComponent>[];
