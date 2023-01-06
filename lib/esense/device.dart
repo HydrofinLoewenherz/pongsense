@@ -51,7 +51,7 @@ class Device {
 
   Sender get sender => _sender;
 
-  ESenseConfig get deviceConfig => _deviceConfig!;
+  ESenseConfig? get deviceConfig => _deviceConfig;
 
   DeviceState get state => __state;
   set _state(DeviceState val) {

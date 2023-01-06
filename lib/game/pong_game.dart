@@ -26,9 +26,6 @@ class PongGame extends FlameGame
         HasCollisionDetection,
         HasKeyboardHandlerComponents,
         HasESenseHandlerComponents {
-  late final Sender _sender;
-  late final ESenseManager _eSenseManager;
-
   double score = 0;
   int playerMaxHealth = 3;
   late int playerHealth = playerMaxHealth;
@@ -41,11 +38,6 @@ class PongGame extends FlameGame
   late final AIPaddle ai;
   late final List<Blocker> blocker;
   late final Ball ball;
-
-  PongGame(final ESenseManager eSenseManager, final Sender sender) {
-    _sender = sender;
-    _eSenseManager = eSenseManager;
-  }
 
   @override
   void onRemove() {
@@ -69,15 +61,19 @@ class PongGame extends FlameGame
       onESenseEvent(event);
     });
 
-    player = PlayerPaddle(_eSenseManager, _sender);
+    player = PlayerPaddle();
     ai = AIPaddle();
     ball = Ball();
 
     await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
 
-    addAll(
-      [ScreenHitbox(), player, ai, ball, PlayerHealth()],
-    );
+    addAll([
+      ScreenHitbox(),
+      player,
+      ai,
+      ball,
+      PlayerHealth(),
+    ]);
 
     blocker = addBlockers(player, ai);
     addAll(blocker);

@@ -8,13 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/math/remap.dart';
+import 'package:pongsense/globals/connection.dart' as g;
 
 class PlayerPaddle extends PositionComponent
     with HasGameRef<FlameGame>, CollisionCallbacks {
   static const double speed = 400;
-
-  late final Sender _sender;
-  late final ESenseManager _eSenseManager;
 
   late final RectangleHitbox paddleHitBox;
   late final RectangleComponent paddle;
@@ -27,11 +25,6 @@ class PlayerPaddle extends PositionComponent
   Vector3? calibrationNormal;
   DateTime? _lastValue;
   int _counter = 0;
-
-  PlayerPaddle(final ESenseManager eSenseManager, final Sender sender) {
-    _sender = sender;
-    _eSenseManager = eSenseManager;
-  }
 
   @override
   Future<void>? onLoad() {
@@ -79,9 +72,6 @@ class PlayerPaddle extends PositionComponent
 
           final accRange = eSenseConfig?.accRange;
           if (accRange == null) {
-            _sender.pushAll([
-              _eSenseManager.getSensorConfig,
-            ]);
             return false;
           }
 
