@@ -1,10 +1,7 @@
-import 'dart:ui';
-
 import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flame_audio/audio_pool.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,37 +37,41 @@ class PongGame extends FlameGame
       [ScreenHitbox(), player, ai, Ball()],
     );
 
-    addBlockerGrid(player, ai);
+    final gridPadding = Vector2(10, size.y * 0.1);
+    final aiBottom = ai.paddle.toAbsoluteRect().bottom;
+    final playerTop = player.paddle.toAbsoluteRect().top;
+    addBlockerGrid(Rect.fromPoints(
+      Offset(gridPadding.x, aiBottom + gridPadding.y),
+      Offset(size.x - gridPadding.x, playerTop - gridPadding.y),
+    ));
   }
 
-  void addBlockerGrid(PlayerPaddle player, AIPaddle ai) {
+  void addBlockerGrid(Rect area, {double gap = 10.0, double emptyRad = 100}) {
     final blockerSize = Vector2(30, 30);
-    // gap between and around
-    const gap = 10;
+    final emptyRect =
+        Rect.fromCenter(center: area.center, width: emptyRad, height: emptyRad);
 
-    final rows =
-        ((player.y - (ai.y + ai.size.y)) - gap) ~/ (gap + blockerSize.x);
-    final cols = (size.x - gap) ~/ (gap + blockerSize.x);
-
-    final actualGapX = size.x - (gap + cols * (gap + blockerSize.x));
-    final actualGapY =
-        (player.y - (ai.y + ai.size.y)) - (gap + rows * (gap + blockerSize.y));
+    // add one gap to width/height because its divided through one too much
+    final rows = (area.height + gap) ~/ (gap + blockerSize.y);
+    final cols = (area.width + gap) ~/ (gap + blockerSize.x);
+    final overHangY = (area.height + gap) % (gap + blockerSize.y);
+    final overHangX = (area.width + gap) % (gap + blockerSize.x);
 
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
-        if ((row - (rows - 1) / 2).abs() < 1 &&
-            (col - (cols - 1) / 2).abs() < 1) {
+        final blocker = Blocker()
+          ..size = blockerSize
+          ..maxLives = 3
+          ..position = Vector2(
+            (overHangX / 2) + area.left + (col * (gap + blockerSize.x)),
+            (overHangY / 2) + area.top + (row * (gap + blockerSize.y)),
+          );
+
+        if (blocker.toAbsoluteRect().overlaps(emptyRect)) {
           continue;
         }
 
-        add(Blocker()
-          ..size = blockerSize
-          ..maxLives = 3
-          ..position = Vector2(actualGapX / 2, actualGapY / 2) +
-              Vector2(
-                gap + col * (gap + blockerSize.x),
-                (ai.y + ai.size.y) + gap + row * (gap + blockerSize.y),
-              ));
+        add(blocker);
       }
     }
   }
