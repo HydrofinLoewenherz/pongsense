@@ -40,17 +40,19 @@ class PongGame extends FlameGame
       [ScreenHitbox(), player, ai, Ball()],
     );
 
-    const gridPadding = 10.0;
+    final gridPadding = Vector2(10, size.y * 0.1);
     final aiBottom = ai.paddle.toAbsoluteRect().bottom;
     final playerTop = player.paddle.toAbsoluteRect().top;
     addBlockerGrid(Rect.fromPoints(
-      Offset(gridPadding, aiBottom + gridPadding),
-      Offset(size.x - gridPadding, playerTop - gridPadding),
+      Offset(gridPadding.x, aiBottom + gridPadding.y),
+      Offset(size.x - gridPadding.x, playerTop - gridPadding.y),
     ));
   }
 
-  void addBlockerGrid(Rect area, {double gap = 10.0, centerEmpty = true}) {
+  void addBlockerGrid(Rect area, {double gap = 10.0, double emptyRad = 100}) {
     final blockerSize = Vector2(30, 30);
+    final emptyRect =
+        Rect.fromCenter(center: area.center, width: emptyRad, height: emptyRad);
 
     // add one gap to width/height because its divided through one too much
     final rows = (area.height + gap) ~/ (gap + blockerSize.y);
@@ -60,19 +62,19 @@ class PongGame extends FlameGame
 
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
-        if (centerEmpty &&
-            (row - (rows - 1) / 2).abs() < 1 &&
-            (col - (cols - 1) / 2).abs() < 1) {
-          continue;
-        }
-
-        add(Blocker()
+        final blocker = Blocker()
           ..size = blockerSize
           ..maxLives = 3
           ..position = Vector2(
             (overHangX / 2) + area.left + (col * (gap + blockerSize.x)),
             (overHangY / 2) + area.top + (row * (gap + blockerSize.y)),
-          ));
+          );
+
+        if (blocker.toAbsoluteRect().overlaps(emptyRect)) {
+          continue;
+        }
+
+        add(blocker);
       }
     }
   }
