@@ -18,8 +18,9 @@ class PlayerPaddle extends PositionComponent
 
   late Vector2 targetPosition;
 
-  bool calibrate = false;
-  Vector3? calibrationNormal;
+  int calibrate = -2;
+  List<Vector3> calibrationNormals = [];
+  Vector3? lastAccel;
 
   @override
   Future<void>? onLoad() {
@@ -44,7 +45,21 @@ class PlayerPaddle extends PositionComponent
             if ((event as ButtonEventChanged).pressed == false) {
               return true; // only care about button-down event
             }
-            calibrate = true;
+            final accel = lastAccel;
+            if (accel == null) return true;
+            if (calibrate == -2) {
+              calibrationNormals.add(accel);
+              calibrate = -1;
+              print('calibration added 1');
+            } else if (calibrate == -1) {
+              calibrationNormals.add(accel);
+              calibrate = 0;
+              print('calibrated');
+            } else {
+              calibrationNormals.clear();
+              calibrate = -2;
+              print('cleared');
+            }
             return true;
           },
         },
@@ -57,11 +72,7 @@ class PlayerPaddle extends PositionComponent
           final rawAccel = Vector3(event.accel![0].toDouble(),
               event.accel![1].toDouble(), event.accel![2].toDouble());
           final accel = rawAccel / accRange.sensitivityFactor;
-
-          if (calibrate) {
-            calibrationNormal = accel;
-            calibrate = false;
-          }
+          lastAccel = accel;
 
           calcTarget(accel);
           return true;
@@ -71,34 +82,38 @@ class PlayerPaddle extends PositionComponent
   }
 
   void calcTarget(Vector3 accel) {
-    final calibrationNormal = this.calibrationNormal;
-    if (calibrationNormal == null) {
+    if (calibrationNormals.length < 2) {
       print("skipping calc target, not calibrated");
       return;
     }
 
-    if (accel.length > 1.2) {
-      print("skipping calc target, length too big ${accel.length}");
-      return;
-    }
+    // if (accel.length > 1.2) {
+    //   print("skipping calc target, length too big ${accel.length}");
+    //   return;
+    // }
 
     const maxAngle = 90.0 * (pi / 180.0);
-    final angle = accel.angleToSigned(calibrationNormal, Vector3(1, 0, 0));
+    final angle = accel.angleToSigned(
+        calibrationNormals[0].normalized(), calibrationNormals[1].normalized());
     final worldRect = gameRef.size.toRect();
 
-    final targetX = angle.remap(-pi, pi, worldRect.left, worldRect.right);
-    targetPosition.x = targetX;
+    print(
+        'A: ${(accel.x * 100).floor()}, ${(accel.y * 100).floor()}, ${(accel.z * 100).floor()}; A\': ${angle.radToDeg().floor()}');
+
+    final targetX = angle.remapAndClamp(
+        -(pi / 2), pi / 2, worldRect.left, worldRect.right - paddle.width);
+    targetPosition.x = targetX.toDouble();
   }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    var moveVec = targetPosition - position;
+    var moveVec = targetPosition - center;
     if (moveVec.length > speed) {
       moveVec.scaleTo(speed);
     }
 
-    position.add(moveVec);
+    center.add(moveVec);
   }
 }
