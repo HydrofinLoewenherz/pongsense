@@ -1,3 +1,4 @@
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 
@@ -31,17 +32,7 @@ class GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  g.connectionState += 'hi';
-                });
-              },
-              child: Text('State: ${g.connectionState}')),
-        ],
-      ),
+      body: GameWidget(game: g.game),
     );
   }
 }

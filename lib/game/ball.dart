@@ -57,7 +57,9 @@ class Ball extends CircleComponent
   }
 
   void _resetBall() {
-    position = gameRef.size / 2;
+    final paddle = gameRef.children.firstWhere((child) => child is PlayerPaddle)
+        as PlayerPaddle;
+    position = paddle.center + (Vector2.zero()..y += paddle.size.y);
     final spawnAngle = calcSpawnAngle(30).degToRad();
     velocity = Vector2(
       math.cos(spawnAngle) * speed,
@@ -66,10 +68,9 @@ class Ball extends CircleComponent
   }
 
   double calcSpawnAngle(double rangeDeg, [double offsetDeg = 0]) {
-    final sideToThrow = math.Random().nextBool();
     final diff = rangeDeg / 2;
     return math.Random().nextDouble().remap(0, 1, 90 - diff, 90 + diff) +
-        (offsetDeg + (sideToThrow ? 0 : 180));
+        (offsetDeg);
   }
 
   @override

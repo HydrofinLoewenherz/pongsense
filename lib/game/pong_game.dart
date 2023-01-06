@@ -29,26 +29,30 @@ class PongGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
+    final player = PlayerPaddle(_eSenseManager, _sender);
+    final ai = AIPaddle();
+
     addAll(
-      [
-        ScreenHitbox(),
-        Ball(),
-        PlayerPaddle(_eSenseManager, _sender),
-        AIPaddle()
-      ],
+      [ScreenHitbox(), Ball(), player, ai],
     );
 
     final blockerSize = Vector2(20, 20);
-    addAll(List<Blocker>.generate(
-        30,
-        (index) => Blocker()
-          ..size = blockerSize
-          ..maxLives = 3
-          ..position = Vector2(
-            lerpDouble(0, size.x - blockerSize.x, (index % 10) / 10)!,
-            lerpDouble(
-                size.y / 2 + 80, size.y * 0.9 - 10, (index / 10) / 10.0)!,
-          )));
+    final gap = 10;
+    final rows = 3;
+    final columns = 10;
+    addAll(List<Blocker>.generate(rows * columns, (index) {
+      final row = index ~/ rows;
+      final col = index % rows;
+
+      return Blocker()
+        ..size = blockerSize
+        ..maxLives = 3
+        ..position = Vector2(
+          lerpDouble(gap, size.x - gap, col / columns)!,
+          lerpDouble(
+              player.y + 2 * player.size.y, ai.y - 2 * ai.size.y, row / rows)!,
+        );
+    }));
   }
 
   @override
