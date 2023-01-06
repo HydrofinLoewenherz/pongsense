@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:esense_flutter/esense.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:pongsense/esense/sender.dart';
 
 enum _State {
   waiting,
@@ -18,6 +19,7 @@ class Device {
   static const int samplingRate = 1;
 
   final _manager = ESenseManager(deviceName);
+  final _sender = Sender(1000);
 
   StreamSubscription? _debugEventSub;
   StreamSubscription? _debugSensorSub;
@@ -38,6 +40,9 @@ class Device {
   Future<bool> _askForPermission(Permission permission) async {
     return await permission.request().isGranted;
   }
+
+  ESenseManager get manager => _manager;
+  Sender get sender => _sender;
 
   Future<bool> _initialize() async {
     final queue = [
