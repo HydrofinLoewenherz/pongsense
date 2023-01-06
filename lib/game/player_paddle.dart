@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
+import 'package:pongsense/math/remap.dart';
 
 class PlayerPaddle extends PositionComponent
     with HasGameRef<FlameGame>, CollisionCallbacks {
@@ -100,10 +101,6 @@ class PlayerPaddle extends PositionComponent
     return super.onLoad();
   }
 
-  double remap(num number, num fromLow, num fromHigh, num toLow, num toHigh) {
-    return (number - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow;
-  }
-
   void calcTarget(Vector3 accel) {
     final calibrationNormal = this.calibrationNormal;
     if (calibrationNormal == null) {
@@ -120,7 +117,7 @@ class PlayerPaddle extends PositionComponent
     final angle = accel.angleToSigned(calibrationNormal, Vector3(1, 0, 0));
     final worldRect = gameRef.size.toRect();
 
-    final targetX = remap(angle, -pi, pi, worldRect.left, worldRect.right);
+    final targetX = angle.remap(-pi, pi, worldRect.left, worldRect.right);
     targetPosition.x = targetX;
   }
 
