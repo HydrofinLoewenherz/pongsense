@@ -36,22 +36,37 @@ class PongGame extends FlameGame
       [ScreenHitbox(), player, ai, Ball()],
     );
 
+    addBlockerGrid(player, ai);
+  }
+
+  void addBlockerGrid(PlayerPaddle player, AIPaddle ai) {
     final blockerSize = Vector2(30, 30);
+    // gap between and around
     const gap = 10;
+
     final rows =
         ((player.y - (ai.y + ai.size.y)) - gap) ~/ (gap + blockerSize.x);
     final cols = (size.x - gap) ~/ (gap + blockerSize.x);
 
+    final actualGapX = size.x - (gap + cols * (gap + blockerSize.x));
+    final actualGapY =
+        (player.y - (ai.y + ai.size.y)) - (gap + rows * (gap + blockerSize.y));
+
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
+        if ((row - (rows - 1) / 2).abs() < 1 &&
+            (col - (cols - 1) / 2).abs() < 1) {
+          continue;
+        }
+
         add(Blocker()
           ..size = blockerSize
           ..maxLives = 3
-          // TODO center grid
-          ..position = Vector2(
-            gap + col * (gap + blockerSize.x),
-            (ai.y + ai.size.y) + gap + row * (gap + blockerSize.y),
-          ));
+          ..position = Vector2(actualGapX / 2, actualGapY / 2) +
+              Vector2(
+                gap + col * (gap + blockerSize.x),
+                (ai.y + ai.size.y) + gap + row * (gap + blockerSize.y),
+              ));
       }
     }
   }
