@@ -13,6 +13,7 @@ import 'package:pongsense/game/ball.dart';
 import 'package:pongsense/game/blocker.dart';
 import 'package:pongsense/game/player_health.dart';
 import 'package:pongsense/game/player_paddle.dart';
+import 'package:pongsense/game/player_score.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 
 const pauseOverlayIdentifier = "PauseOverlay";
@@ -87,6 +88,7 @@ class PongGame extends FlameGame
       ai,
       ball,
       PlayerHealth(),
+      PlayerScore(),
     ]);
 
     blocker = addBlockers(player, ai);

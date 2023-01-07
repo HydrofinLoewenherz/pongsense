@@ -1,10 +1,10 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:pongsense/game/pong_game.dart';
 
 class Blocker extends RectangleComponent
-    with HasGameRef<FlameGame>, CollisionCallbacks {
+    with HasGameRef<PongGame>, CollisionCallbacks {
   double maxLives = 3;
   late double lives = maxLives;
 
@@ -37,6 +37,7 @@ class Blocker extends RectangleComponent
 
     if (lives == 0) {
       removeFromParent();
+      gameRef.score += 50;
     }
   }
 

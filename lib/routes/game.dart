@@ -64,7 +64,7 @@ Widget _endMenuBuilder(BuildContext buildContext, PongGame game) {
             style: TextStyle(color: Colors.white),
           ),
           Text(
-            'Score ${game.score}',
+            'Score: ${game.score.floor()}',
             style: const TextStyle(color: Colors.white),
           ),
           ElevatedButton(
@@ -86,10 +86,6 @@ Widget _pauseMenuBuilder(BuildContext buildContext, PongGame game) {
           const Text(
             'Paused',
             style: TextStyle(color: Colors.white),
-          ),
-          Text(
-            'Score ${game.score}',
-            style: const TextStyle(color: Colors.white),
           ),
           ElevatedButton(
             onPressed: game.togglePause,

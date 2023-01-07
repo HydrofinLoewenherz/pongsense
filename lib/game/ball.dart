@@ -7,7 +7,6 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/blocker.dart';
-import 'package:pongsense/game/player_health.dart';
 import 'package:pongsense/game/player_paddle.dart';
 import 'package:pongsense/game/pong_game.dart';
 import 'package:pongsense/math/remap.dart';
@@ -79,9 +78,13 @@ class Ball extends CircleComponent
   void update(double dt) {
     super.update(dt);
 
+    // skip all updates where the time was to long because of the following collision check
     if (dt > 1) {
       return;
     }
+
+    // give score for being alive
+    gameRef.score += dt;
 
     final steps = ((velocity * dt).length / stepSize).ceil();
 
@@ -137,6 +140,7 @@ class Ball extends CircleComponent
     // top collision
     if (almostEqual(collisionRect.bottom, worldRect.top)) {
       gameRef.healPlayer();
+      gameRef.score += 100;
       reset();
     }
     // bottom collision
