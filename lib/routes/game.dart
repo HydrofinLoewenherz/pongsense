@@ -42,6 +42,7 @@ class GameScreenState extends State<GameScreen> {
       ),
       body: GameWidget(
         game: g.game,
+        initialActiveOverlays: const [pauseOverlayIdentifier],
         overlayBuilderMap: const {
           pauseOverlayIdentifier: _pauseMenuBuilder,
           endOverlayIdentifier: _endMenuBuilder,

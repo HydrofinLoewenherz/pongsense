@@ -91,10 +91,6 @@ class PongGame extends FlameGame
 
     blocker = addBlockers(player, ai);
     addAll(blocker);
-
-    // force calibrate on startup
-    pauseEngine();
-    overlays.add(calibrateOverlayIdentifier);
   }
 
   List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
@@ -187,6 +183,12 @@ class PongGame extends FlameGame
   void resetCalibration() {
     upCalibration = null;
     forwardCalibration = null;
+
+    // idiot hack to update overlay
+    if (overlays.isActive(calibrateOverlayIdentifier)) {
+      overlays.remove(calibrateOverlayIdentifier);
+      overlays.add(calibrateOverlayIdentifier);
+    }
   }
 
   // if not calibrated, uses the events acc vector as the next calibration vector (first 'up' then 'forward').
@@ -210,12 +212,12 @@ class PongGame extends FlameGame
       upCalibration = accel;
     } else {
       forwardCalibration = accel;
+    }
 
-      // calibration finished: go back to pause menu (if on calibration overlay)
-      if (overlays.isActive(calibrateOverlayIdentifier)) {
-        overlays.remove(calibrateOverlayIdentifier);
-        overlays.add(pauseOverlayIdentifier);
-      }
+    // idiot hack to update overlay
+    if (overlays.isActive(calibrateOverlayIdentifier)) {
+      overlays.remove(calibrateOverlayIdentifier);
+      overlays.add(calibrateOverlayIdentifier);
     }
     return true;
   }
