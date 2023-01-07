@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:pongsense/components/nav_bar.dart';
+import 'package:pongsense/components/nav_button.dart';
 import 'package:pongsense/game/pong_game.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 
@@ -23,21 +25,24 @@ class GameScreenState extends State<GameScreen> {
     super.dispose();
   }
 
+  VoidCallback? _onPressedCalibrate() {
+    return () {
+      Navigator.popAndPushNamed(context, '/calibrate');
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.popAndPushNamed(context, '/connect');
-              },
-              child: const Text('Connect-Screen'),
-            ),
-            const Text('Game-Screen'),
-          ],
+      appBar: NavBar(
+        title: 'Game',
+        leftButton: NavButton(
+          onPressed: _onPressedCalibrate(),
+          child: const Text('Calibrate'),
+        ),
+        rightButton: NavButton(
+          onPressed: null,
+          child: const Text(''),
         ),
       ),
       body: GameWidget(

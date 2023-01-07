@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pongsense/routes/calibration.dart';
 import 'package:pongsense/routes/connect.dart';
 import 'package:pongsense/routes/game.dart';
 
@@ -24,6 +25,7 @@ class PongSenseState extends State<PongSense> {
       routes: {
         '/connect': (context) => const ConnectScreen(),
         '/game': (context) => const GameScreen(),
+        '/calibrate': (context) => const CalibrationScreen()
       },
     );
   }
