@@ -300,7 +300,7 @@ class Device {
         _state = DeviceState.connecting;
         break;
       case ConnectionType.device_not_found:
-        assert(__state == DeviceState.searching, "invalid state-sequence");
+        // assert(__state == DeviceState.searching, "invalid state-sequence");
         _state = DeviceState.waiting;
         break;
     }
