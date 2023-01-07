@@ -129,8 +129,10 @@ Widget _calibrationMenuBuilder(BuildContext buildContext, PongGame game) {
                     : "LOOK DOWN in front of you"),
             style: const TextStyle(color: Colors.white),
           ),
-          const Text(
-            "and click the button on the EARABLE to calibrate.",
+          Text(
+            game.isCalibrated
+                ? "have fun"
+                : "and click the button on the EARABLE to calibrate.",
             style: TextStyle(color: Colors.white),
           ),
           ElevatedButton(
