@@ -96,7 +96,7 @@ class PongGame extends FlameGame
   }
 
   List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
-    final gridPadding = Vector2(10, size.y * 0.1);
+    final gridPadding = Vector2(10, size.y * 0.2);
     final aiBottom = ai.paddle.toAbsoluteRect().bottom;
     final playerTop = player.paddle.toAbsoluteRect().top;
     return addBlockerGrid(Rect.fromPoints(

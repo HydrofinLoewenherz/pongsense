@@ -6,9 +6,10 @@ class PlayerScore extends PositionComponent with HasGameRef<PongGame> {
 
   @override
   Future<void>? onLoad() {
-    text = TextBoxComponent(
+    text = TextComponent(
+      scale: Vector2(0.5, 0.5),
       text: "Score: ${gameRef.score}",
-      position: Vector2(10.0, 10 + 10 + 5),
+      position: Vector2(10.0, 10 + 10 + 10),
     );
     add(text);
 

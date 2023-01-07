@@ -39,7 +39,7 @@ class Ball extends CircleComponent
   }
 
   static const _radius = 10.0;
-  static const speed = 1000.0;
+  static const speed = 100.0;
   static const stepSize = _radius / 4.0;
 
   late Vector2 velocity;
