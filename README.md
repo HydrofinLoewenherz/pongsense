@@ -53,11 +53,11 @@ The **Audio Files** that are used in the project are imported from [Storybooks][
 
 The following **Libraries** are used in the project
 
-- [flame][flame] (2D game library)
-- [flame_audio][flame-audio] (audio in game)
+- [flame][flame] (2D game engine)
+- [flame_audio][flame-audio] (audio for flame)
 - [esense_flutter (custom fork)][flutter-esense-fork] (esense connection)
-- permission_handler
-- ditredi
+- [permission_handler][permission-handler] (ask for permissions on android)
+- [ditredi][ditredi] (3D visualization package)
 
 See the dependencies in the `pubspec.yml` for more information.
 
@@ -70,6 +70,9 @@ See the dependencies in the `pubspec.yml` for more information.
 [flutter-esense-fork]: https://github.com/HydrofinLoewenherz/flutter-plugins/tree/master/packages/esense_flutter "Flutter Esense Package (Custom Fork)"
 [flame]: https://pub.dev/packages/flame "Flame Package"
 [flame-audio]: https://pub.dev/packages/flame_audio "Flame Audio Package"
+[permission-handler]: https://pub.dev/packages/permission_handler "Permission Handler Package"
+[permission-handler]: https://pub.dev/packages/permission_handler "Permission Handler Package"
+[ditredi]: https://pub.dev/packages/ditredi "ditredi Package"
 
-[paul-github]: https://github.com/HydrofinLoewenherz "ujhtl""
+[paul-github]: https://github.com/HydrofinLoewenherz "ujhtl"
 [rico-github]: https://github.com/cryeprecision "uozjn"
