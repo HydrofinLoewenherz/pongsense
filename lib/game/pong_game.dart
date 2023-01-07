@@ -6,9 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pongsense/esense/device.dart';
-import 'package:pongsense/esense/sender.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ai_paddle.dart';
 import 'package:pongsense/game/ball.dart';
@@ -19,6 +17,7 @@ import 'package:pongsense/globals/connection.dart' as g;
 
 const pauseOverlayIdentifier = "PauseOverlay";
 const endOverlayIdentifier = "EndOverlay";
+const calibrateOverlayIdentifier = "CalibrateOverlay";
 
 class PongGame extends FlameGame
     with
@@ -26,18 +25,28 @@ class PongGame extends FlameGame
         HasCollisionDetection,
         HasKeyboardHandlerComponents,
         HasESenseHandlerComponents {
+  // game loop
   double score = 0;
   int playerMaxHealth = 3;
   late int playerHealth = playerMaxHealth;
 
+  // esense connection
   Closer? _stateCallbackCloser;
   Closer? _eventCallbackCloser;
   Closer? _sensorCallbackCloser;
 
+  // game components
   late final PlayerPaddle player;
   late final AIPaddle ai;
   late final List<Blocker> blocker;
   late final Ball ball;
+
+  // calibration
+  bool shouldCalibrate = false;
+  Vector3? upCalibration;
+  Vector3? forwardCalibration;
+  bool get isCalibrated =>
+      upCalibration != null && forwardCalibration != null && !shouldCalibrate;
 
   @override
   void onDetach() {
@@ -82,6 +91,10 @@ class PongGame extends FlameGame
 
     blocker = addBlockers(player, ai);
     addAll(blocker);
+
+    // force calibrate on startup
+    pauseEngine();
+    overlays.add(calibrateOverlayIdentifier);
   }
 
   List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
@@ -130,7 +143,7 @@ class PongGame extends FlameGame
 
   void damagePlayer({int amount = 1}) {
     playerHealth = max(0, playerHealth - amount);
-
+    // show end overlay if player died
     if (playerHealth == 0) {
       pauseEngine();
       overlays.add(endOverlayIdentifier);
@@ -141,6 +154,8 @@ class PongGame extends FlameGame
     playerHealth = min(playerHealth + amount, playerMaxHealth);
   }
 
+  // resets all game elements and resumes the engine
+  // expects to currently show the end overlay
   void reset() {
     score = 0;
     playerHealth = playerMaxHealth;
@@ -152,17 +167,16 @@ class PongGame extends FlameGame
     }
     ball.reset();
 
-    overlays.remove(endOverlayIdentifier);
+    if (overlays.isActive(endOverlayIdentifier)) {
+      overlays.remove(endOverlayIdentifier);
+    }
     resumeEngine();
   }
 
+  // toggles the pause overlay (and engine)
   void togglePause() {
-    if (overlays.isActive(endOverlayIdentifier)) {
-      return;
-    }
-
     if (overlays.isActive(pauseOverlayIdentifier)) {
-      overlays.remove(pauseOverlayIdentifier);
+      overlays.clear();
       resumeEngine();
     } else {
       overlays.add(pauseOverlayIdentifier);
@@ -170,10 +184,78 @@ class PongGame extends FlameGame
     }
   }
 
+  void resetCalibration() {
+    upCalibration = null;
+    forwardCalibration = null;
+  }
+
+  // if not calibrated, uses the events acc vector as the next calibration vector (first 'up' then 'forward').
+  bool calibrate(SensorEvent event) {
+    final eventAccel = event.accel;
+    if (isCalibrated || eventAccel == null) {
+      return false;
+    }
+
+    final accRange = g.device.deviceConfig?.accRange;
+    if (accRange == null) {
+      return false;
+    }
+
+    final rawAccel = Vector3(eventAccel[0].toDouble(), eventAccel[1].toDouble(),
+        eventAccel[2].toDouble());
+    final accel = rawAccel / accRange.sensitivityFactor;
+
+    // update 'up' first and then 'forward'
+    if (upCalibration == null) {
+      upCalibration = accel;
+    } else {
+      forwardCalibration = accel;
+
+      // calibration finished: go back to pause menu (if on calibration overlay)
+      if (overlays.isActive(calibrateOverlayIdentifier)) {
+        overlays.remove(calibrateOverlayIdentifier);
+        overlays.add(pauseOverlayIdentifier);
+      }
+    }
+    return true;
+  }
+
   @override
   void onLongTapDown(int pointerId, TapDownInfo info) {
     super.onLongTapDown(pointerId, info);
 
-    togglePause();
+    // don't allow to close end overlay (only via reset)
+    if (!overlays.isActive(endOverlayIdentifier)) {
+      togglePause();
+    }
+  }
+
+  @override
+  @mustCallSuper
+  ESenseEventResult onESenseEvent(
+    ESenseEvent event,
+  ) {
+    // update state to use the next sensor event to update the calibration
+    // only if calibration overlay is open to prevent accidental calibration
+    if (event is ButtonEventChanged &&
+        event.pressed &&
+        overlays.isActive(calibrateOverlayIdentifier)) {
+      shouldCalibrate = true;
+    }
+
+    return super.onESenseEvent(event);
+  }
+
+  @override
+  @mustCallSuper
+  ESenseEventResult onSensorEvent(
+    SensorEvent event,
+  ) {
+    if (shouldCalibrate) {
+      calibrate(event);
+      shouldCalibrate = false;
+    }
+
+    return super.onSensorEvent(event);
   }
 }
