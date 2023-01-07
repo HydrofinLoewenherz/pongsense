@@ -174,6 +174,6 @@ class Ball extends CircleComponent
   }
 
   void playCollisionSound() {
-    FlameAudio.play("sfx/8-bit-jump-sound.mp3");
+    FlameAudio.play("sfx/8-bit-pong-sound.mp3");
   }
 }

@@ -54,6 +54,7 @@ class PongGame extends FlameGame
     _stateCallbackCloser?.call();
     _eventCallbackCloser?.call();
     _sensorCallbackCloser?.call();
+    FlameAudio.bgm.stop();
     super.onDetach();
   }
 
@@ -72,6 +73,8 @@ class PongGame extends FlameGame
     _eventCallbackCloser = g.device.registerEventCallback((event) {
       onESenseEvent(event);
     });
+
+    FlameAudio.bgm.play("bg/gaming-arcade-intro.mp3", volume: 0.2);
   }
 
   @override
@@ -80,7 +83,14 @@ class PongGame extends FlameGame
     ai = AIPaddle();
     ball = Ball();
 
-    await FlameAudio.audioCache.load('sfx/8-bit-jump-sound.mp3');
+    await FlameAudio.audioCache.loadAll([
+      'sfx/8-bit-jump-sound.mp3',
+      'sfx/8-bit-pong-sound.mp3',
+      'sfx/8-bit-score-sound.mp3',
+      'sfx/8-bit-crash-sound.mp3',
+      'sfx/8-bit-death-sound.mp3',
+      'bg/gaming-arcade-intro.mp3',
+    ]);
 
     addAll([
       ScreenHitbox(),
@@ -143,6 +153,7 @@ class PongGame extends FlameGame
     playerHealth = max(0, playerHealth - amount);
     // show end overlay if player died
     if (playerHealth == 0) {
+      FlameAudio.play("sfx/8-bit-death-sound.mp3");
       pauseEngine();
       overlays.add(endOverlayIdentifier);
     }

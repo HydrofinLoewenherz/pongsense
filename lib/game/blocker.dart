@@ -1,5 +1,6 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/game/pong_game.dart';
 
@@ -38,6 +39,7 @@ class Blocker extends RectangleComponent
     if (lives == 0) {
       removeFromParent();
       gameRef.score += 50;
+      FlameAudio.play("sfx/8-bit-crash-sound.mp3");
     }
   }
 
