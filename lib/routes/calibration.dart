@@ -4,8 +4,6 @@ import 'dart:math';
 import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:pongsense/components/nav_bar.dart';
-import 'package:pongsense/components/nav_button.dart';
 import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 import 'package:ditredi/ditredi.dart';
@@ -165,19 +163,6 @@ class CalibrationScreenState extends State<CalibrationScreen> {
     super.dispose();
   }
 
-  VoidCallback? _onPressedToGame() {
-    if (_deviceState != DeviceState.initialized) return null;
-    return () {
-      Navigator.popAndPushNamed(context, '/game');
-    };
-  }
-
-  VoidCallback? _onPressedToConnect() {
-    return () {
-      Navigator.popAndPushNamed(context, '/connect');
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final points = _generateAccelPoints();
@@ -190,65 +175,57 @@ class CalibrationScreenState extends State<CalibrationScreen> {
     ];
 
     return Scaffold(
-      appBar: NavBar(
-        title: 'Calibrate',
-        leftButton: NavButton(
-          onPressed: _onPressedToConnect(),
-          child: const Text('Connect'),
-        ),
-        rightButton: NavButton(
-          onPressed: _onPressedToGame(),
-          child: const Text('Play'),
-        ),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            children: [
-              Text(
-                  'Calibration: ${_calibration.name} (${_calibrationAccels.length})'),
-              Row(children: [
-                ElevatedButton(
-                  onPressed: _startCalibrating,
-                  child: const Text('Start Calibration'),
-                ),
-                ElevatedButton(
-                  onPressed: _resetCalibrating,
-                  child: const Text('Reset Calibration'),
-                )
-              ]),
-              const SizedBox(height: 16),
-              Container(
-                height: 300,
-                color: Colors.blueGrey,
-                child: DiTreDiDraggable(
-                  controller: _controllerFront,
-                  child: DiTreDi(
-                    bounds: _bounds,
-                    config: const DiTreDiConfig(),
-                    figures: figures,
+      body: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              children: [
+                Text(
+                    'Calibration: ${_calibration.name} (${_calibrationAccels.length})'),
+                Row(children: [
+                  ElevatedButton(
+                    onPressed: _startCalibrating,
+                    child: const Text('Start Calibration'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _resetCalibrating,
+                    child: const Text('Reset Calibration'),
+                  )
+                ]),
+                const SizedBox(height: 16),
+                Container(
+                  height: 300,
+                  color: Colors.blueGrey,
+                  child: DiTreDiDraggable(
                     controller: _controllerFront,
+                    child: DiTreDi(
+                      bounds: _bounds,
+                      config: const DiTreDiConfig(),
+                      figures: figures,
+                      controller: _controllerFront,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 300,
-                color: Colors.blueGrey,
-                child: DiTreDiDraggable(
-                  controller: _controllerTop,
-                  child: DiTreDi(
-                    bounds: _bounds,
-                    config: const DiTreDiConfig(),
-                    figures: figures,
+                const SizedBox(height: 16),
+                Container(
+                  height: 300,
+                  color: Colors.blueGrey,
+                  child: DiTreDiDraggable(
                     controller: _controllerTop,
+                    child: DiTreDi(
+                      bounds: _bounds,
+                      config: const DiTreDiConfig(),
+                      figures: figures,
+                      controller: _controllerTop,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          )
-        ],
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

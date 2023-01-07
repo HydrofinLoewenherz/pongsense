@@ -1,7 +1,4 @@
-import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'package:pongsense/components/nav_bar.dart';
-import 'package:pongsense/components/nav_button.dart';
 import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 
@@ -58,27 +55,9 @@ class ConnectScreenState extends State<ConnectScreen> {
     };
   }
 
-  VoidCallback? _onPressedToCalibration() {
-    if (_deviceState != DeviceState.initialized) return null;
-    return () {
-      Navigator.popAndPushNamed(context, '/calibrate');
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: NavBar(
-        title: 'Connect',
-        leftButton: NavButton(
-          onPressed: null,
-          child: const Text(''),
-        ),
-        rightButton: NavButton(
-          onPressed: _onPressedToCalibration(),
-          child: const Text('Calibrate'),
-        ),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
