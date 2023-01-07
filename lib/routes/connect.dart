@@ -1,8 +1,11 @@
-import 'package:esense_flutter/esense.dart';
+import 'dart:collection';
+
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/globals/connection.dart' as g;
+import 'package:ditredi/ditredi.dart';
+import 'package:pongsense/math/remap.dart';
 
 class ConnectScreen extends StatefulWidget {
   const ConnectScreen({super.key});
@@ -12,13 +15,38 @@ class ConnectScreen extends StatefulWidget {
 }
 
 class ConnectScreenState extends State<ConnectScreen> {
-  String _deviceInfo = g.device.toString();
-  DeviceState _deviceState = g.device.state;
+  static const int _maxLen = 60 * 1; // 60fps, 10s
+
+  var _deviceInfo = g.device.toString();
+  var _deviceState = g.device.state;
+  var _lastAccels = ListQueue<Vector3>(_maxLen);
+  var _lastGyros = ListQueue<Vector3>(_maxLen);
+  final _controllerFront =
+      DiTreDiController(rotationX: 0, rotationY: 0, rotationZ: 0);
+  final _controllerTop =
+      DiTreDiController(rotationX: 90, rotationY: 0, rotationZ: 0);
+
   Closer? _stateCallbackCloser;
   Closer? _eventCallbackCloser;
   Closer? _sensorCallbackCloser;
-  List<int>? _lastGyro;
-  List<int>? _lastAccel;
+
+  List<Point3D> _generatePoints() {
+    final len = _lastAccels.length;
+    return _lastAccels.mapIndexed((v, i) {
+      final alpha = (i / len).remap(0, 1, 0, 255).floor();
+      return Point3D(v.normalized(),
+          width: 2, color: Colors.red.withAlpha(alpha));
+    }).toList();
+  }
+
+  List<Line3D> _generateLine() {
+    final len = _lastAccels.length;
+    if (len == 0) return [];
+    final last = _lastAccels.last.normalized();
+    return [
+      Line3D(Vector3.zero(), last, width: 2, color: Colors.red.withAlpha(180)),
+    ];
+  }
 
   void _updateDevice() {
     setState(() {
@@ -27,16 +55,20 @@ class ConnectScreenState extends State<ConnectScreen> {
     });
   }
 
-  static String _formatArray(List<int>? it) {
+  static String _formatArray(Vector3? it) {
     if (it != null) {
       var buffer = '\n';
-      for (final num in it) {
-        if (buffer.length > 1) buffer += '\n';
-        buffer += num.toString();
-      }
+      buffer += '${it[0].toString()}\n';
+      buffer += '${it[1].toString()}\n';
+      buffer += it[2].toString();
       return buffer;
     }
     return 'null';
+  }
+
+  static Vector3? _toVec3(List<int>? it) {
+    if (it == null || it.length < 3) return null;
+    return Vector3(it[0].toDouble(), it[1].toDouble(), it[2].toDouble());
   }
 
   @override
@@ -46,8 +78,8 @@ class ConnectScreenState extends State<ConnectScreen> {
       _updateDevice();
       if (state == DeviceState.waiting) {
         setState(() {
-          _lastAccel = null;
-          _lastGyro = null;
+          _lastAccels = ListQueue<Vector3>(_maxLen);
+          _lastGyros = ListQueue<Vector3>(_maxLen);
         });
       }
     });
@@ -55,9 +87,14 @@ class ConnectScreenState extends State<ConnectScreen> {
       _updateDevice();
     });
     _sensorCallbackCloser = g.device.registerSensorCallback((event) {
+      final gyro = _toVec3(event.gyro);
+      final accel = _toVec3(event.accel);
+      if (gyro == null || accel == null) return;
       setState(() {
-        _lastGyro = event.gyro;
-        _lastAccel = event.accel;
+        if (_lastGyros.length > _maxLen) _lastGyros.removeFirst();
+        if (_lastAccels.length > _maxLen) _lastAccels.removeFirst();
+        _lastGyros.addLast(gyro);
+        _lastAccels.addLast(accel);
       });
     });
   }
@@ -86,6 +123,9 @@ class ConnectScreenState extends State<ConnectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final points = _generatePoints();
+    final plane = PointPlane3D(2, Axis3D.y, 0.1, Vector3.zero(), pointWidth: 1);
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -102,17 +142,17 @@ class ConnectScreenState extends State<ConnectScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(64.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(_deviceInfo),
             Text(
-              'Gyro: ${_formatArray(_lastGyro)}',
+              'Gyro: ${_formatArray(_lastGyros.isEmpty ? null : _lastGyros.last)}',
               textAlign: TextAlign.center,
             ),
             Text(
-              'Accel: ${_formatArray(_lastAccel)}',
+              'Accel: ${_formatArray(_lastAccels.isEmpty ? null : _lastAccels.last)}',
               textAlign: TextAlign.center,
             ),
             Row(
@@ -128,6 +168,49 @@ class ConnectScreenState extends State<ConnectScreen> {
                 ),
               ],
             ),
+            Expanded(
+              child: Column(
+                children: [
+                  Container(
+                    height: 200,
+                    color: Colors.blueGrey,
+                    child: DiTreDiDraggable(
+                      controller: _controllerFront,
+                      child: DiTreDi(
+                        bounds:
+                            Aabb3.minMax(Vector3(-1, -1, -1), Vector3(1, 1, 1)),
+                        config: const DiTreDiConfig(),
+                        figures: [
+                          plane,
+                          ...points,
+                          ..._generateLine(),
+                        ],
+                        controller: _controllerFront,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    height: 200,
+                    color: Colors.blueGrey,
+                    child: DiTreDiDraggable(
+                      controller: _controllerTop,
+                      child: DiTreDi(
+                        bounds:
+                            Aabb3.minMax(Vector3(-1, -1, -1), Vector3(1, 1, 1)),
+                        config: const DiTreDiConfig(),
+                        figures: [
+                          plane,
+                          ...points,
+                          ..._generateLine(),
+                        ],
+                        controller: _controllerTop,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
           ],
         ),
       ),
