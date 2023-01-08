@@ -28,11 +28,9 @@ class GameScreenState extends State<GameScreen> {
     return Scaffold(
       body: GameWidget(
         game: g.game,
-        initialActiveOverlays: const [pauseOverlayIdentifier],
         overlayBuilderMap: const {
           pauseOverlayIdentifier: _pauseMenuBuilder,
           endOverlayIdentifier: _endMenuBuilder,
-          calibrateOverlayIdentifier: _calibrationMenuBuilder,
         },
       ),
     );
@@ -76,58 +74,6 @@ Widget _pauseMenuBuilder(BuildContext buildContext, PongGame game) {
           ElevatedButton(
             onPressed: game.togglePause,
             child: const Text("Continue"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              game.overlays.remove(pauseOverlayIdentifier);
-              game.overlays.add(calibrateOverlayIdentifier);
-            },
-            child: const Text("Calibrate"),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _calibrationMenuBuilder(BuildContext buildContext, PongGame game) {
-  final calibrateUp = game.upCalibration == null;
-
-  return FrostedGlass(
-    child: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            game.isCalibrated
-                ? "Calibrated"
-                : (calibrateUp ? "Calibrating 1/2" : "Calibrating 2/2"),
-            style: const TextStyle(color: Colors.white),
-          ),
-          Text(
-            game.isCalibrated
-                ? "You can now play the game"
-                : (calibrateUp
-                    ? "Hold your HEAD UPRIGHT"
-                    : "LOOK DOWN in front of you"),
-            style: const TextStyle(color: Colors.white),
-          ),
-          Text(
-            game.isCalibrated
-                ? "have fun"
-                : "and click the button on the EARABLE to calibrate.",
-            style: TextStyle(color: Colors.white),
-          ),
-          ElevatedButton(
-            onPressed: game.resetCalibration,
-            child: const Text("Recalibrate"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              game.overlays.remove(calibrateOverlayIdentifier);
-              game.overlays.add(pauseOverlayIdentifier);
-            },
-            child: const Text("Back"),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:pongsense/esense/angler.dart';
 
 enum ESenseEventResult {
   /// The event has been handled, and the event should not be propagated to
@@ -29,6 +30,10 @@ mixin ESenseHandler on Component {
   }
 
   bool onSensorEvent(SensorEvent event) {
+    return true;
+  }
+
+  bool onAnglerEvent(AnglerEvent event) {
     return true;
   }
 }
@@ -67,6 +72,23 @@ mixin HasESenseHandlerComponents on FlameGame implements ESenseEvents {
     }
     return ESenseEventResult.ignored;
   }
+
+  @override
+  @mustCallSuper
+  ESenseEventResult onAnglerEvent(
+    AnglerEvent event,
+  ) {
+    final blockedPropagation = !propagateToChildren<ESenseHandler>(
+      (ESenseHandler child) => child.onAnglerEvent(event),
+    );
+
+    // If any component received the event, return handled,
+    // otherwise, ignore it.
+    if (blockedPropagation) {
+      return ESenseEventResult.handled;
+    }
+    return ESenseEventResult.ignored;
+  }
 }
 
 /// A [Game] mixin to make a game subclass sensitive to esense events.
@@ -94,11 +116,23 @@ mixin ESenseEvents on Game {
 
     return ESenseEventResult.handled;
   }
+
+  ESenseEventResult onAnglerEvent(AnglerEvent event) {
+    assert(
+      this is! HasESenseHandlerComponents,
+      'A sensor event was registered by ESenseEvents for a game also '
+      'mixed with HasESenseEventHandlerComponents. Do not mix with both, '
+      'HasESenseEventHandlerComponents removes the necessity of ESenseEvents',
+    );
+
+    return ESenseEventResult.handled;
+  }
 }
 
 /// The signature for a handle function
 typedef ESenseHandlerCallback = bool Function(ESenseEvent event);
 typedef SensorHandlerCallback = bool Function(SensorEvent event);
+typedef AnglerHandlerCallback = bool Function(AnglerEvent event);
 
 /// {@template keyboard_listener_component}
 /// A [Component] that receives keyboard input and executes registered methods.
@@ -110,11 +144,14 @@ class ESenseListenerComponent extends Component with ESenseHandler {
   ESenseListenerComponent({
     Map<Type, ESenseHandlerCallback> eSenseCallbacks = const {},
     SensorHandlerCallback? sensorCallback,
+    AnglerHandlerCallback? anglerCallback,
   })  : _eSenseCallbacks = eSenseCallbacks,
-        _sensorCallback = sensorCallback;
+        _sensorCallback = sensorCallback,
+        _anglerCallback = anglerCallback;
 
   final Map<Type, ESenseHandlerCallback> _eSenseCallbacks;
   final SensorHandlerCallback? _sensorCallback;
+  final AnglerHandlerCallback? _anglerCallback;
 
   @override
   bool onESenseEvent(ESenseEvent event) {
@@ -130,6 +167,12 @@ class ESenseListenerComponent extends Component with ESenseHandler {
   @override
   bool onSensorEvent(SensorEvent event) {
     _sensorCallback?.call(event);
+    return true;
+  }
+
+  @override
+  bool onAnglerEvent(AnglerEvent event) {
+    _anglerCallback?.call(event);
     return true;
   }
 }

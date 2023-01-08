@@ -15,10 +15,10 @@ import 'package:pongsense/game/player_health.dart';
 import 'package:pongsense/game/player_paddle.dart';
 import 'package:pongsense/game/player_score.dart';
 import 'package:pongsense/globals/connection.dart' as g;
+import 'package:pongsense/util/callback.dart';
 
 const pauseOverlayIdentifier = "PauseOverlay";
 const endOverlayIdentifier = "EndOverlay";
-const calibrateOverlayIdentifier = "CalibrateOverlay";
 
 class PongGame extends FlameGame
     with
@@ -36,25 +36,22 @@ class PongGame extends FlameGame
   Closer? _eventCallbackCloser;
   Closer? _sensorCallbackCloser;
 
+  // angler connection
+  Closer? _angleChangedCallbackCloser;
+
   // game components
   late final PlayerPaddle player;
   late final AIPaddle ai;
   late final List<Blocker> blocker;
   late final Ball ball;
 
-  // calibration
-  bool shouldCalibrate = false;
-  Vector3? upCalibration;
-  Vector3? forwardCalibration;
-  bool get isCalibrated =>
-      upCalibration != null && forwardCalibration != null && !shouldCalibrate;
-
   @override
   void onDetach() {
     _stateCallbackCloser?.call();
     _eventCallbackCloser?.call();
     _sensorCallbackCloser?.call();
-    FlameAudio.bgm.stop();
+    _angleChangedCallbackCloser?.call();
+    FlameAudio.bgm.pause();
     super.onDetach();
   }
 
@@ -73,8 +70,12 @@ class PongGame extends FlameGame
     _eventCallbackCloser = g.device.registerEventCallback((event) {
       onESenseEvent(event);
     });
+    _angleChangedCallbackCloser =
+        g.angler.registerAngleChangedCallback((event) {
+      onAnglerEvent(event);
+    });
 
-    FlameAudio.bgm.play("bg/gaming-arcade-intro.mp3", volume: 0.2);
+    FlameAudio.bgm.resume();
   }
 
   @override
@@ -103,6 +104,8 @@ class PongGame extends FlameGame
 
     blocker = addBlockers(player, ai);
     addAll(blocker);
+
+    FlameAudio.bgm.play("bg/gaming-arcade-intro.mp3", volume: 0.2);
   }
 
   List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
@@ -193,48 +196,6 @@ class PongGame extends FlameGame
     }
   }
 
-  void resetCalibration() {
-    upCalibration = null;
-    forwardCalibration = null;
-
-    // idiot hack to update overlay
-    if (overlays.isActive(calibrateOverlayIdentifier)) {
-      overlays.remove(calibrateOverlayIdentifier);
-      overlays.add(calibrateOverlayIdentifier);
-    }
-  }
-
-  // if not calibrated, uses the events acc vector as the next calibration vector (first 'up' then 'forward').
-  bool calibrate(SensorEvent event) {
-    final eventAccel = event.accel;
-    if (isCalibrated || eventAccel == null) {
-      return false;
-    }
-
-    final accRange = g.device.deviceConfig?.accRange;
-    if (accRange == null) {
-      return false;
-    }
-
-    final rawAccel = Vector3(eventAccel[0].toDouble(), eventAccel[1].toDouble(),
-        eventAccel[2].toDouble());
-    final accel = rawAccel / accRange.sensitivityFactor;
-
-    // update 'up' first and then 'forward'
-    if (upCalibration == null) {
-      upCalibration = accel;
-    } else {
-      forwardCalibration = accel;
-    }
-
-    // idiot hack to update overlay
-    if (overlays.isActive(calibrateOverlayIdentifier)) {
-      overlays.remove(calibrateOverlayIdentifier);
-      overlays.add(calibrateOverlayIdentifier);
-    }
-    return true;
-  }
-
   @override
   void onLongTapDown(int pointerId, TapDownInfo info) {
     super.onLongTapDown(pointerId, info);
@@ -243,34 +204,5 @@ class PongGame extends FlameGame
     if (!overlays.isActive(endOverlayIdentifier)) {
       togglePause();
     }
-  }
-
-  @override
-  @mustCallSuper
-  ESenseEventResult onESenseEvent(
-    ESenseEvent event,
-  ) {
-    // update state to use the next sensor event to update the calibration
-    // only if calibration overlay is open to prevent accidental calibration
-    if (event is ButtonEventChanged &&
-        event.pressed &&
-        overlays.isActive(calibrateOverlayIdentifier)) {
-      shouldCalibrate = true;
-    }
-
-    return super.onESenseEvent(event);
-  }
-
-  @override
-  @mustCallSuper
-  ESenseEventResult onSensorEvent(
-    SensorEvent event,
-  ) {
-    if (shouldCalibrate) {
-      calibrate(event);
-      shouldCalibrate = false;
-    }
-
-    return super.onSensorEvent(event);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/globals/connection.dart' as g;
+import 'package:pongsense/util/callback.dart';
 
 class ConnectScreen extends StatefulWidget {
   const ConnectScreen({super.key});
@@ -49,7 +50,8 @@ class ConnectScreenState extends State<ConnectScreen> {
   }
 
   VoidCallback? _onPressedDisconnect() {
-    if (_deviceState != DeviceState.initialized) return null;
+    if (_deviceState != DeviceState.initialized &&
+        _deviceState != DeviceState.connected) return null;
     return () {
       g.device.disconnectAndStopListening();
     };

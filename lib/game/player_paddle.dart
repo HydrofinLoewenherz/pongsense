@@ -1,13 +1,10 @@
-import 'dart:math';
-
-import 'package:esense_flutter/esense.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:pongsense/esense/angler.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/pong_game.dart';
 import 'package:pongsense/math/remap.dart';
-import 'package:pongsense/globals/connection.dart' as g;
 
 class PlayerPaddle extends PositionComponent
     with HasGameRef<PongGame>, CollisionCallbacks {
@@ -35,41 +32,18 @@ class PlayerPaddle extends PositionComponent
 
     addAll([paddle, paddleHitBox]);
 
-    add(ESenseListenerComponent(sensorCallback: ((event) {
-      final accRange = g.device.deviceConfig?.accRange;
-      if (accRange == null) {
-        return false;
-      }
-
-      final rawAccel = Vector3(event.accel![0].toDouble(),
-          event.accel![1].toDouble(), event.accel![2].toDouble());
-      final accel = rawAccel / accRange.sensitivityFactor;
-
-      calcTarget(accel);
+    add(ESenseListenerComponent(anglerCallback: (event) {
+      calcTarget(event);
       return true;
-    })));
+    }));
 
     return super.onLoad();
   }
 
-  void calcTarget(Vector3 accel) {
-    if (!gameRef.isCalibrated) {
-      print("skipping calc target, not calibrated");
-      return;
-    }
-
-    const maxAngle = 90.0 * (pi / 180.0);
-    final angle = accel.angleToSigned(
-      gameRef.upCalibration!.normalized(),
-      gameRef.forwardCalibration!.normalized(),
-    );
+  void calcTarget(AnglerEvent event) {
     final worldRect = gameRef.size.toRect();
-
-    print(
-        'A: ${(accel.x * 100).floor()}, ${(accel.y * 100).floor()}, ${(accel.z * 100).floor()}; A\': ${angle.radToDeg().floor()}');
-
-    final targetX = angle.remapAndClamp(
-        -(pi / 2), pi / 2, worldRect.left, worldRect.right - paddle.width);
+    final targetX = event.percent
+        .remapAndClamp(0, 1, worldRect.left, worldRect.right - paddle.width);
     targetPosition.x = targetX.toDouble();
   }
 

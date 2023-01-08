@@ -8,6 +8,8 @@ import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/globals/connection.dart' as g;
 import 'package:ditredi/ditredi.dart';
 import 'package:pongsense/math/remap.dart';
+import 'package:pongsense/math/vector.dart';
+import 'package:pongsense/util/callback.dart';
 
 class CalibrationScreen extends StatefulWidget {
   const CalibrationScreen({super.key});
@@ -16,28 +18,20 @@ class CalibrationScreen extends StatefulWidget {
   CalibrationScreenState createState() => CalibrationScreenState();
 }
 
-enum Calibration {
-  none,
-  calibrating,
-  done,
-}
-
 class CalibrationScreenState extends State<CalibrationScreen> {
   static const int _maxLen = 60 * 1; // 60fps, 10s
-  static const int _calibrationCount = 3;
-  static final _calibrationColors = [
-    Colors.pink.withAlpha(180),
-    Colors.green.withAlpha(180),
-    Colors.blue.withAlpha(180),
-  ];
+  static final _calibrationColorLeft = Colors.pink.withAlpha(180);
+  static final _calibrationColorRight = Colors.green.withAlpha(180);
   static final _bounds = Aabb3.minMax(Vector3(-1, -1, -1), Vector3(1, 1, 1));
 
   var _lastAccels = ListQueue<Vector3>(_maxLen);
   var _lastGyros = ListQueue<Vector3>(_maxLen);
   var _deviceState = g.device.state;
-  var _calibration = Calibration.none;
 
-  final _calibrationAccels = <Vector3>[];
+  Vector3? _calibrateLeft;
+  Vector3? _calibrateRight;
+  double? _lastAngleLeft;
+  double? _lastAngleRight;
 
   final _controllerFront = DiTreDiController(
     rotationX: 0,
@@ -52,7 +46,7 @@ class CalibrationScreenState extends State<CalibrationScreen> {
 
   Closer? _sensorCallbackCloser;
   Closer? _stateCallbackCloser;
-  Closer? _eventCallbackCloser;
+  Closer? _angleChangedCallbackCloser;
 
   List<Point3D> _generateAccelPoints() {
     final len = _lastAccels.length;
@@ -78,47 +72,48 @@ class CalibrationScreenState extends State<CalibrationScreen> {
   }
 
   List<Line3D> _generateCalibrationLines() {
-    final count = min(_calibrationAccels.length, _calibrationCount);
     var buffer = <Line3D>[];
-    for (var i = 0; i < count; i += 1) {
+    final left = _calibrateLeft;
+    final right = _calibrateRight;
+
+    if (left != null) {
       buffer.add(Line3D(
         Vector3.zero(),
-        _calibrationAccels[i].normalized(),
+        left.normalized(),
         width: 2,
-        color: _calibrationColors[i],
+        color: _calibrationColorLeft,
       ));
     }
+    if (right != null) {
+      buffer.add(Line3D(
+        Vector3.zero(),
+        right.normalized(),
+        width: 2,
+        color: _calibrationColorRight,
+      ));
+    }
+
     return buffer;
   }
 
-  static Vector3? _toVec3(List<int>? it) {
-    if (it == null || it.length < 3) return null;
-    return Vector3(it[0].toDouble(), it[1].toDouble(), it[2].toDouble());
+  VoidCallback? _onPressCalibrateLeft() {
+    return () {
+      if (g.angler.doCalibrateLeft()) {
+        setState(() {
+          _calibrateLeft = g.angler.calibrateLeft;
+        });
+      }
+    };
   }
 
-  void _startCalibrating() {
-    setState(() {
-      _calibration = Calibration.calibrating;
-    });
-  }
-
-  void _resetCalibrating() {
-    setState(() {
-      _calibration = Calibration.none;
-      _calibrationAccels.clear();
-    });
-  }
-
-  void _onCalibrationStep() {
-    if (_calibration != Calibration.calibrating) return;
-    if (_lastAccels.isEmpty) return;
-
-    _calibrationAccels.add(_lastAccels.last);
-    if (_calibrationAccels.length >= _calibrationCount) {
-      setState(() {
-        _calibration = Calibration.done;
-      });
-    }
+  VoidCallback? _onPressCalibrateRight() {
+    return () {
+      if (g.angler.doCalibrateRight()) {
+        setState(() {
+          _calibrateRight = g.angler.calibrateRight;
+        });
+      }
+    };
   }
 
   @override
@@ -135,8 +130,8 @@ class CalibrationScreenState extends State<CalibrationScreen> {
       });
     });
     _sensorCallbackCloser = g.device.registerSensorCallback((event) {
-      final gyro = _toVec3(event.gyro);
-      final accel = _toVec3(event.accel);
+      final gyro = toVec3(event.gyro);
+      final accel = toVec3(event.accel);
       if (gyro == null || accel == null) return;
       setState(() {
         if (_lastGyros.length > _maxLen) _lastGyros.removeFirst();
@@ -145,13 +140,12 @@ class CalibrationScreenState extends State<CalibrationScreen> {
         _lastAccels.addLast(accel);
       });
     });
-    _eventCallbackCloser = g.device.registerEventCallback((event_) {
-      if (event_.runtimeType != ButtonEventChanged) return;
-      final event = event_ as ButtonEventChanged;
-      if (event.pressed == false) return;
-      if (_calibration != Calibration.done) {
-        _onCalibrationStep();
-      }
+    _angleChangedCallbackCloser =
+        g.angler.registerAngleChangedCallback((event) {
+      setState(() {
+        _lastAngleLeft = event.leftAngle;
+        _lastAngleRight = event.rightAngle;
+      });
     });
   }
 
@@ -159,7 +153,7 @@ class CalibrationScreenState extends State<CalibrationScreen> {
   void dispose() {
     _sensorCallbackCloser?.call();
     _stateCallbackCloser?.call();
-    _eventCallbackCloser?.call();
+    _angleChangedCallbackCloser?.call();
     super.dispose();
   }
 
@@ -182,21 +176,21 @@ class CalibrationScreenState extends State<CalibrationScreen> {
           children: [
             Column(
               children: [
-                Text(
-                    'Calibration: ${_calibration.name} (${_calibrationAccels.length})'),
                 Row(children: [
                   ElevatedButton(
-                    onPressed: _startCalibrating,
-                    child: const Text('Start Calibration'),
+                    onPressed: _onPressCalibrateLeft(),
+                    child: const Text('Calibrate Left'),
                   ),
                   ElevatedButton(
-                    onPressed: _resetCalibrating,
-                    child: const Text('Reset Calibration'),
+                    onPressed: _onPressCalibrateRight(),
+                    child: const Text('Calibrate Right'),
                   )
                 ]),
+                Text('AngleLeft: ${_lastAngleLeft?.radToDeg().floor()}'),
+                Text('AngleRight: ${_lastAngleRight?.radToDeg().floor()}'),
                 const SizedBox(height: 16),
                 Container(
-                  height: 300,
+                  height: 200,
                   color: Colors.blueGrey,
                   child: DiTreDiDraggable(
                     controller: _controllerFront,
@@ -210,7 +204,7 @@ class CalibrationScreenState extends State<CalibrationScreen> {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  height: 300,
+                  height: 200,
                   color: Colors.blueGrey,
                   child: DiTreDiDraggable(
                     controller: _controllerTop,

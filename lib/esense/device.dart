@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:esense_flutter/esense.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pongsense/esense/sender.dart';
+import 'package:pongsense/util/callback.dart';
 import 'package:pongsense/util/pair.dart';
 
 enum DeviceState {
@@ -12,9 +13,6 @@ enum DeviceState {
   connected,
   initialized,
 }
-
-typedef Callback<T> = void Function(T);
-typedef Closer = void Function();
 
 class Device {
   static const String deviceName = 'eSense-0320';
@@ -30,6 +28,7 @@ class Device {
   final _sensorCallbacks = <Pair<int, Callback<SensorEvent>>>[];
   final _stateCallbacks = <Pair<int, Callback<DeviceState>>>[];
 
+  // TODO: use finalizer to close
   StreamSubscription? _connectionSub;
   StreamSubscription? _debugConnectionSub;
 
@@ -44,6 +43,7 @@ class Device {
   String? _deviceName;
   double? _deviceBatteryVolt;
   ESenseConfig? _deviceConfig;
+  bool _receivedSensorEvent = false;
 
   DeviceState __state = DeviceState.waiting;
 
@@ -153,6 +153,10 @@ class Device {
       () async => await _manager.getDeviceName(),
       () async => await _manager.getSensorConfig(),
       () async => await _manager.getBatteryVoltage(),
+      () async {
+        _sensorSub = _manager.sensorEvents.listen(_onSensorEvent);
+        return true;
+      },
     ];
     for (final req in queue) {
       if (!await req()) {
@@ -164,7 +168,8 @@ class Device {
     for (;;) {
       if (_deviceName == null ||
           _deviceConfig == null ||
-          _deviceBatteryVolt == null) {
+          _deviceBatteryVolt == null ||
+          !_receivedSensorEvent) {
         await Future.delayed(requestDelay);
         continue;
       }
@@ -239,9 +244,10 @@ class Device {
       invokeCallbacks(_eventCallbacks, event);
     });
 
+    await Future.delayed(const Duration(seconds: 1));
     await _initialize();
     // _debugSensorSub = _manager.sensorEvents.listen(print);
-    _sensorSub = _manager.sensorEvents.listen(_onSensorEvent);
+    // we start listening to sensor-events inside `_initialize`
     _callbackSensorSub = _manager.sensorEvents.listen((event) {
       invokeCallbacks(_sensorCallbacks, event);
     });
@@ -279,7 +285,11 @@ class Device {
     }
   }
 
-  void _onSensorEvent(SensorEvent event) {}
+  void _onSensorEvent(SensorEvent event) {
+    if (!_receivedSensorEvent) {
+      _receivedSensorEvent = true;
+    }
+  }
 
   void _onConnectionEvent(ConnectionEvent event) {
     switch (event.type) {
@@ -322,6 +332,7 @@ class Device {
 
   Future<bool> disconnectAndStopListening() async {
     _deviceBatteryVolt = _deviceConfig = _deviceName = null;
+    _receivedSensorEvent = false;
 
     if (__state != DeviceState.initialized &&
         __state != DeviceState.connected &&
