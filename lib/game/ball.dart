@@ -83,6 +83,12 @@ class Ball extends CircleComponent
       return;
     }
 
+    // reset ball if it manages to get out of bounds
+    final infWorldRect = gameRef.size.toRect().inflate(2 * radius);
+    if (!infWorldRect.contains(position.toOffset())) {
+      reset();
+    }
+
     // give score for being alive
     gameRef.score += dt;
 
