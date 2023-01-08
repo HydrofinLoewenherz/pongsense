@@ -4,6 +4,7 @@ import 'package:pongsense/routes/calibration.dart';
 import 'package:pongsense/routes/connect.dart';
 import 'package:pongsense/routes/game.dart';
 import 'package:pongsense/globals/connection.dart' as g;
+import 'package:pongsense/util/callback.dart';
 
 void main() => runApp(const PongSense());
 
