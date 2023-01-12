@@ -48,10 +48,12 @@ class Device {
   DeviceState __state = DeviceState.waiting;
 
   ESenseManager get manager => _manager;
-
   Sender get sender => _sender;
-
   ESenseConfig? get deviceConfig => _deviceConfig;
+  bool get receivedSensorEvent => _receivedSensorEvent;
+  bool get receivedDeviceName => _deviceName != null;
+  bool get receivedBatteryVolt => _deviceBatteryVolt != null;
+  bool get receivedDeviceConfig => _deviceConfig != null;
 
   DeviceState get state => __state;
   set _state(DeviceState val) {

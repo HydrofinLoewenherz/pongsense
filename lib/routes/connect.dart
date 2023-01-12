@@ -10,16 +10,35 @@ class ConnectScreen extends StatefulWidget {
   ConnectScreenState createState() => ConnectScreenState();
 }
 
+// TableRow(children: <TableCell>[
+//                   TableCell(
+//                     verticalAlignment: TableCellVerticalAlignment.middle,
+//                     child: Text("Hello"),
+//                   ),
+//                   TableCell(
+//                       verticalAlignment: TableCellVerticalAlignment.middle,
+//                       child: Text("World"))
+//                 ])
+
+class YesNoRow extends TableRow {}
+
 class ConnectScreenState extends State<ConnectScreen> {
-  var _deviceInfo = g.device.toString();
   var _deviceState = g.device.state;
+
+  var _receivedSensorEvent = false;
+  var _receivedDeviceName = false;
+  var _receivedBatteryVolt = false;
+  var _receivedDeviceConfig = false;
 
   Closer? _stateCallbackCloser;
   Closer? _eventCallbackCloser;
 
   void _updateDevice() {
     setState(() {
-      _deviceInfo = g.device.toString();
+      _receivedSensorEvent = g.device.receivedSensorEvent;
+      _receivedDeviceName = g.device.receivedDeviceName;
+      _receivedBatteryVolt = g.device.receivedBatteryVolt;
+      _receivedDeviceConfig = g.device.receivedDeviceConfig;
       _deviceState = g.device.state;
     });
   }
@@ -42,19 +61,34 @@ class ConnectScreenState extends State<ConnectScreen> {
     super.dispose();
   }
 
-  VoidCallback? _onPressedConnect() {
-    if (_deviceState != DeviceState.waiting) return null;
-    return () {
-      g.device.connectAndStartListening();
-    };
+  String get _buttonText {
+    switch (_deviceState) {
+      case DeviceState.waiting:
+        return 'Connect';
+      case DeviceState.searching:
+      case DeviceState.connecting:
+        return 'Connecting...';
+      case DeviceState.connected:
+      case DeviceState.initialized:
+        return 'Disconnect';
+    }
   }
 
-  VoidCallback? _onPressedDisconnect() {
-    if (_deviceState != DeviceState.initialized &&
-        _deviceState != DeviceState.connected) return null;
-    return () {
-      g.device.disconnectAndStopListening();
-    };
+  VoidCallback? _onPressed() {
+    switch (_deviceState) {
+      case DeviceState.waiting:
+        return () {
+          g.device.disconnectAndStopListening();
+        };
+      case DeviceState.searching:
+      case DeviceState.connecting:
+        return null;
+      case DeviceState.connected:
+      case DeviceState.initialized:
+        return () {
+          g.device.connectAndStartListening();
+        };
+    }
   }
 
   @override
@@ -63,21 +97,49 @@ class ConnectScreenState extends State<ConnectScreen> {
       body: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_deviceInfo),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: _onPressedConnect(),
-                  child: const Text('Connect'),
-                ),
-                ElevatedButton(
-                  onPressed: _onPressedDisconnect(),
-                  child: const Text('Disconnect'),
-                ),
-              ],
+            Expanded(
+              child: ListView(
+                children: <Widget>[
+                  const ListTile(
+                    title: Text(
+                      'Connection State',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  ListTile(
+                    leading:
+                        Icon(_receivedSensorEvent ? Icons.check : Icons.close),
+                    title: const Text('Received Sensor-Event'),
+                  ),
+                  ListTile(
+                    leading:
+                        Icon(_receivedDeviceName ? Icons.check : Icons.close),
+                    title: const Text('Received Device-Name'),
+                  ),
+                  ListTile(
+                    leading:
+                        Icon(_receivedBatteryVolt ? Icons.check : Icons.close),
+                    title: const Text('Received Battery-Voltage'),
+                  ),
+                  ListTile(
+                    leading:
+                        Icon(_receivedDeviceConfig ? Icons.check : Icons.close),
+                    title: const Text('Received Device-Config'),
+                  ),
+                ],
+              ),
+            ),
+            const Expanded(
+              child: SizedBox(),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _onPressed(),
+                child: Text(_buttonText),
+              ),
             ),
           ],
         ),
