@@ -1,11 +1,9 @@
 import 'dart:math';
 
-import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame_audio/flame_audio.dart';
-import 'package:flutter/material.dart';
 import 'package:pongsense/esense/device.dart';
 import 'package:pongsense/flame/esense.dart';
 import 'package:pongsense/game/ai_paddle.dart';
@@ -42,7 +40,7 @@ class PongGame extends FlameGame
   // game components
   late final PlayerPaddle player;
   late final AIPaddle ai;
-  late final List<Blocker> blocker;
+  late final List<Blocker> blockers;
   late final Ball ball;
 
   @override
@@ -104,53 +102,35 @@ class PongGame extends FlameGame
       PlayerScore(),
     ]);
 
-    blocker = addBlockers(player, ai);
-    addAll(blocker);
+    blockers = addBlockers(player, ai);
+    addAll(blockers);
 
     FlameAudio.bgm.play("bg/gaming-arcade-intro.mp3", volume: 0.2);
   }
 
   List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
-    final gridPadding = Vector2(10, size.y * 0.2);
-    final aiBottom = ai.paddle.toAbsoluteRect().bottom;
-    final playerTop = player.paddle.toAbsoluteRect().top;
-    return addBlockerGrid(Rect.fromPoints(
-      Offset(gridPadding.x, aiBottom + gridPadding.y),
-      Offset(size.x - gridPadding.x, playerTop - gridPadding.y),
-    ));
-  }
-
-  List<Blocker> addBlockerGrid(Rect area,
-      {double gap = 10.0, double emptyRad = 100}) {
-    List<Blocker> blockers = [];
-
+    const gridPadding = 10;
+    const gridGap = 10;
+    const rows = 2;
     final blockerSize = Vector2(30, 30);
-    final emptyRect =
-        Rect.fromCenter(center: area.center, width: emptyRad, height: emptyRad);
+    final aiBottom = ai.paddle.toAbsoluteRect().bottom;
 
-    // add one gap to width/height because its divided through one too much
-    final rows = (area.height + gap) ~/ (gap + blockerSize.y);
-    final cols = (area.width + gap) ~/ (gap + blockerSize.x);
-    final overHangY = (area.height + gap) % (gap + blockerSize.y);
-    final overHangX = (area.width + gap) % (gap + blockerSize.x);
+    final cols = (size.x + gridGap) ~/ (gridGap + blockerSize.x);
+    final overHangX = (size.x + gridGap) % (gridGap + blockerSize.x);
 
+    List<Blocker> blockers = [];
     for (var row = 0; row < rows; row++) {
       for (var col = 0; col < cols; col++) {
-        final blocker = Blocker()
+        blockers.add(Blocker()
           ..size = blockerSize
           ..maxLives = 3
           ..position = Vector2(
-            (overHangX / 2) + area.left + (col * (gap + blockerSize.x)),
-            (overHangY / 2) + area.top + (row * (gap + blockerSize.y)),
-          );
-
-        if (blocker.toAbsoluteRect().overlaps(emptyRect)) {
-          continue;
-        }
-
-        blockers.add(blocker);
+            (overHangX / 2) + gridPadding + (col * (gridGap + blockerSize.x)),
+            aiBottom + gridPadding + (gridGap * row),
+          ));
       }
     }
+
     return blockers;
   }
 
@@ -173,7 +153,7 @@ class PongGame extends FlameGame
   void reset() {
     score = 0;
     playerHealth = playerMaxHealth;
-    for (var b in blocker) {
+    for (var b in blockers) {
       b.reset();
       if (b.parent == null) {
         add(b);
