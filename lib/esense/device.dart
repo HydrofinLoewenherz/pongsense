@@ -313,7 +313,7 @@ class Device {
         break;
       case ConnectionType.device_not_found:
         // assert(__state == DeviceState.searching, "invalid state-sequence");
-        _state = DeviceState.waiting;
+        _state = DeviceState.searching;
         break;
     }
   }

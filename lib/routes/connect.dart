@@ -28,14 +28,18 @@ const NoIcon = Icon(
   Icons.close,
   color: Colors.red,
 );
+const SyncIcon = Icon(
+  Icons.sync,
+  color: Colors.blue,
+);
 
 class ConnectScreenState extends State<ConnectScreen> {
   var _deviceState = g.device.state;
 
-  var _receivedSensorEvent = false;
-  var _receivedDeviceName = false;
-  var _receivedBatteryVolt = false;
-  var _receivedDeviceConfig = false;
+  var _receivedSensorEvent = g.device.receivedSensorEvent;
+  var _receivedDeviceName = g.device.receivedDeviceName;
+  var _receivedBatteryVolt = g.device.receivedBatteryVolt;
+  var _receivedDeviceConfig = g.device.receivedDeviceConfig;
 
   Closer? _stateCallbackCloser;
   Closer? _eventCallbackCloser;
@@ -73,9 +77,11 @@ class ConnectScreenState extends State<ConnectScreen> {
       case DeviceState.waiting:
         return 'Connect';
       case DeviceState.searching:
+        return 'Searching...';
       case DeviceState.connecting:
         return 'Connecting...';
       case DeviceState.connected:
+        return 'Initializing...';
       case DeviceState.initialized:
         return 'Disconnect';
     }
@@ -85,15 +91,15 @@ class ConnectScreenState extends State<ConnectScreen> {
     switch (_deviceState) {
       case DeviceState.waiting:
         return () {
-          g.device.disconnectAndStopListening();
+          g.device.connectAndStartListening();
         };
       case DeviceState.searching:
       case DeviceState.connecting:
-        return null;
       case DeviceState.connected:
+        return null;
       case DeviceState.initialized:
         return () {
-          g.device.connectAndStartListening();
+          g.device.disconnectAndStopListening();
         };
     }
   }
@@ -116,19 +122,35 @@ class ConnectScreenState extends State<ConnectScreen> {
                     ),
                   ),
                   ListTile(
-                    leading: _receivedSensorEvent ? YesIcon : NoIcon,
+                    leading: _receivedSensorEvent
+                        ? YesIcon
+                        : (_deviceState == DeviceState.connected
+                            ? SyncIcon
+                            : NoIcon),
                     title: const Text('Received Sensor-Event'),
                   ),
                   ListTile(
-                    leading: _receivedDeviceName ? YesIcon : NoIcon,
+                    leading: _receivedDeviceName
+                        ? YesIcon
+                        : (_deviceState == DeviceState.connected
+                            ? SyncIcon
+                            : NoIcon),
                     title: const Text('Received Device-Name'),
                   ),
                   ListTile(
-                    leading: _receivedBatteryVolt ? YesIcon : NoIcon,
+                    leading: _receivedBatteryVolt
+                        ? YesIcon
+                        : (_deviceState == DeviceState.connected
+                            ? SyncIcon
+                            : NoIcon),
                     title: const Text('Received Battery-Voltage'),
                   ),
                   ListTile(
-                    leading: _receivedDeviceConfig ? YesIcon : NoIcon,
+                    leading: _receivedDeviceConfig
+                        ? YesIcon
+                        : (_deviceState == DeviceState.connected
+                            ? SyncIcon
+                            : NoIcon),
                     title: const Text('Received Device-Config'),
                   ),
                 ],
