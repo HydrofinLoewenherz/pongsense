@@ -115,8 +115,10 @@ class PongGame extends FlameGame
     final blockerSize = Vector2(30, 30);
     final aiBottom = ai.paddle.toAbsoluteRect().bottom;
 
-    final cols = (size.x + gridGap) ~/ (gridGap + blockerSize.x);
-    final overHangX = (size.x + gridGap) % (gridGap + blockerSize.x);
+    final cols =
+        (size.x - (2 * gridPadding) + gridGap) ~/ (gridGap + blockerSize.x);
+    final overHangX =
+        (size.x - (2 * gridPadding) + gridGap) % (gridGap + blockerSize.x);
 
     List<Blocker> blockers = [];
     for (var row = 0; row < rows; row++) {
@@ -126,7 +128,7 @@ class PongGame extends FlameGame
           ..maxLives = 3
           ..position = Vector2(
             (overHangX / 2) + gridPadding + (col * (gridGap + blockerSize.x)),
-            aiBottom + gridPadding + (gridGap * row),
+            aiBottom + gridPadding + ((gridGap + blockerSize.y) * row),
           ));
       }
     }
