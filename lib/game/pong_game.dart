@@ -50,20 +50,13 @@ class PongGame extends FlameGame
     _sensorCallbackCloser?.call();
     _angleChangedCallbackCloser?.call();
     FlameAudio.bgm.pause();
-    pause();
     super.onDetach();
   }
 
   @override
   void onAttach() {
     super.onAttach();
-    pause();
 
-    _stateCallbackCloser = g.device.registerStateCallback((state) {
-      if (state != DeviceState.initialized) {
-        pause();
-      }
-    });
     _sensorCallbackCloser = g.device.registerSensorCallback((event) {
       onSensorEvent(event);
     });
@@ -106,6 +99,8 @@ class PongGame extends FlameGame
     addAll(blockers);
 
     FlameAudio.bgm.play("bg/gaming-arcade-intro.mp3", volume: 0.2);
+
+    pause();
   }
 
   List<Blocker> addBlockers(PlayerPaddle player, AIPaddle ai) {
