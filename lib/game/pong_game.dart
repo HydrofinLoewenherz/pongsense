@@ -52,16 +52,18 @@ class PongGame extends FlameGame
     _sensorCallbackCloser?.call();
     _angleChangedCallbackCloser?.call();
     FlameAudio.bgm.pause();
+    pause();
     super.onDetach();
   }
 
   @override
   void onAttach() {
     super.onAttach();
+    pause();
 
     _stateCallbackCloser = g.device.registerStateCallback((state) {
-      if (state == DeviceState.waiting) {
-        togglePause();
+      if (state != DeviceState.initialized) {
+        pause();
       }
     });
     _sensorCallbackCloser = g.device.registerSensorCallback((event) {
@@ -185,24 +187,27 @@ class PongGame extends FlameGame
     resumeEngine();
   }
 
-  // toggles the pause overlay (and engine)
-  void togglePause() {
-    if (overlays.isActive(pauseOverlayIdentifier)) {
-      overlays.clear();
-      resumeEngine();
-    } else {
+  void pause() {
+    if (!paused) {
+      paused = true;
+    }
+    if (!overlays.isActive(pauseOverlayIdentifier)) {
       overlays.add(pauseOverlayIdentifier);
-      pauseEngine();
+    }
+  }
+
+  void unpause() {
+    if (paused) {
+      paused = false;
+    }
+    if (overlays.isActive(pauseOverlayIdentifier)) {
+      overlays.remove(pauseOverlayIdentifier);
     }
   }
 
   @override
   void onLongTapDown(int pointerId, TapDownInfo info) {
     super.onLongTapDown(pointerId, info);
-
-    // don't allow to close end overlay (only via reset)
-    if (!overlays.isActive(endOverlayIdentifier)) {
-      togglePause();
-    }
+    pause();
   }
 }

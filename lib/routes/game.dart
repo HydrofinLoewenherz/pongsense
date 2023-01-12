@@ -72,7 +72,7 @@ Widget _pauseMenuBuilder(BuildContext buildContext, PongGame game) {
             style: TextStyle(color: Colors.white),
           ),
           ElevatedButton(
-            onPressed: game.togglePause,
+            onPressed: game.unpause,
             child: const Text("Continue"),
           ),
         ],
