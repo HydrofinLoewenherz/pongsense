@@ -20,7 +20,14 @@ class ConnectScreen extends StatefulWidget {
 //                       child: Text("World"))
 //                 ])
 
-class YesNoRow extends TableRow {}
+const YesIcon = Icon(
+  Icons.check,
+  color: Colors.green,
+);
+const NoIcon = Icon(
+  Icons.close,
+  color: Colors.red,
+);
 
 class ConnectScreenState extends State<ConnectScreen> {
   var _deviceState = g.device.state;
@@ -109,23 +116,19 @@ class ConnectScreenState extends State<ConnectScreen> {
                     ),
                   ),
                   ListTile(
-                    leading:
-                        Icon(_receivedSensorEvent ? Icons.check : Icons.close),
+                    leading: _receivedSensorEvent ? YesIcon : NoIcon,
                     title: const Text('Received Sensor-Event'),
                   ),
                   ListTile(
-                    leading:
-                        Icon(_receivedDeviceName ? Icons.check : Icons.close),
+                    leading: _receivedDeviceName ? YesIcon : NoIcon,
                     title: const Text('Received Device-Name'),
                   ),
                   ListTile(
-                    leading:
-                        Icon(_receivedBatteryVolt ? Icons.check : Icons.close),
+                    leading: _receivedBatteryVolt ? YesIcon : NoIcon,
                     title: const Text('Received Battery-Voltage'),
                   ),
                   ListTile(
-                    leading:
-                        Icon(_receivedDeviceConfig ? Icons.check : Icons.close),
+                    leading: _receivedDeviceConfig ? YesIcon : NoIcon,
                     title: const Text('Received Device-Config'),
                   ),
                 ],
