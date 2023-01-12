@@ -45,7 +45,7 @@ class Ball extends CircleComponent
   late Vector2 velocity;
 
   static const degree = math.pi / 180;
-  static const nudgeSpeed = 300;
+  static const nudgeSpeed = 5.0;
 
   @override
   Future<void> onLoad() async {
@@ -122,9 +122,11 @@ class Ball extends CircleComponent
       case ScreenHitbox:
         return handleScreenCollide(collisionRect);
       case PlayerPaddle:
+        velocity += velocity.normalized() * nudgeSpeed;
         return handleRectCollide(
             collisionRect, (other as PlayerPaddle).paddle.toAbsoluteRect());
       case AIPaddle:
+        velocity += velocity.normalized() * nudgeSpeed;
         return handleRectCollide(
             collisionRect, (other as AIPaddle).paddle.toAbsoluteRect());
       case Blocker:
