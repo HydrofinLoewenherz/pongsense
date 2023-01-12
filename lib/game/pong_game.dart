@@ -186,8 +186,8 @@ class PongGame extends FlameGame
   }
 
   @override
-  void onLongTapDown(int pointerId, TapDownInfo info) {
-    super.onLongTapDown(pointerId, info);
+  void onTapDown(int pointerId, TapDownInfo info) {
+    super.onTapDown(pointerId, info);
     pause();
   }
 }
