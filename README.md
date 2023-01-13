@@ -21,6 +21,8 @@ To play the game with the best experience, follow these steps.
 11. Try to get a high score before loosing all your lives (displayed on the top left, over the current score)
 12. Have fun :smile:
 
+:warning: Disclaimer: This app is only tested on android, as we don't own an iOS device. It is expected to be used on mobile.
+
 ## Features
 
 Every feature of the app has a person responsible for it. This person created most or all of it.
