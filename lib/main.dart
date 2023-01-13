@@ -81,7 +81,7 @@ class NavigationState extends State<Navigation> {
         ),
         const BottomNavigationBarItem(
           icon: Icon(Icons.gamepad),
-          label: "Game",
+          label: "Play",
         ),
       ],
       onTap: _onTap,
@@ -125,7 +125,7 @@ class NavigationState extends State<Navigation> {
       case 1:
         return "Calibrate";
       case 2:
-        return "Game";
+        return "Play";
       default:
         return "Connect";
     }
