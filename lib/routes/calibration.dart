@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/esense/device.dart';
@@ -56,15 +57,15 @@ class CalibrationScreenState extends State<CalibrationScreen> {
     final len = _lastAccels.length;
     return _lastAccels.mapIndexed((v, i) {
       final alpha = (i / len).remap(0, 1, 0, 150).floor();
-      return Point3D(v.normalized(),
-          width: 2, color: _accelColor.withAlpha(alpha));
+      return Point3D(v, width: 2, color: _accelColor.withAlpha(alpha));
     }).toList();
   }
 
   List<Line3D> _generateAccelLine() {
     final len = _lastAccels.length;
     if (len == 0) return [];
-    final last = _lastAccels.last.normalized();
+
+    final last = _lastAccels.last;
     return [
       Line3D(
         Vector3.zero(),
@@ -135,21 +136,26 @@ class CalibrationScreenState extends State<CalibrationScreen> {
       if (state == _deviceState) return;
       setState(() {
         _deviceState = state;
-        if (state == DeviceState.waiting) {
+        if (state != DeviceState.initialized) {
           _lastAccels = ListQueue<Vector3>(_maxLen);
           _lastGyros = ListQueue<Vector3>(_maxLen);
         }
       });
     });
     _sensorCallbackCloser = g.device.registerSensorCallback((event) {
-      final gyro = toVec3(event.gyro);
-      final accel = toVec3(event.accel);
+      final gyroScale = g.device.deviceConfig?.gyroRange?.sensitivityFactor;
+      final accelScale = g.device.deviceConfig?.accRange?.sensitivityFactor;
+      if (gyroScale == null || accelScale == null) return;
+
+      var gyro = toVec3(event.gyro);
+      var accel = toVec3(event.accel);
       if (gyro == null || accel == null) return;
+
       setState(() {
         if (_lastGyros.length > _maxLen) _lastGyros.removeFirst();
         if (_lastAccels.length > _maxLen) _lastAccels.removeFirst();
-        _lastGyros.addLast(gyro);
-        _lastAccels.addLast(accel);
+        _lastGyros.addLast(gyro / gyroScale);
+        _lastAccels.addLast(accel / accelScale);
       });
     });
   }
