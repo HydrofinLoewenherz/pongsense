@@ -145,8 +145,8 @@ The problem is, that the original flutter package didn't map the ESense output t
 
 ## Screenshots
 
-<img width="450" alt="Pongsense calibrate screen" src="https://user-images.githubusercontent.com/20629648/212373181-90ed9fe2-9f60-4f74-8b2e-d1df570801f4.png">
 <img width="450" alt="Pongsense connect screen" src="https://user-images.githubusercontent.com/20629648/212373187-06db6f64-d968-47ca-a4ff-ecc56d0588f9.png">
+<img width="450" alt="Pongsense calibrate screen" src="https://user-images.githubusercontent.com/20629648/212373181-90ed9fe2-9f60-4f74-8b2e-d1df570801f4.png">
 <img width="450" alt="Pongsense play screen" src="https://user-images.githubusercontent.com/20629648/212373194-5e1c2f17-c182-4c57-b574-247a47222833.png">
 
 ## Authors
