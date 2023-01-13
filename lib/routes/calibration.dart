@@ -1,7 +1,5 @@
 import 'dart:collection';
-import 'dart:math';
 
-import 'package:esense_flutter/esense.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:pongsense/esense/device.dart';
@@ -18,30 +16,36 @@ class CalibrationScreen extends StatefulWidget {
   CalibrationScreenState createState() => CalibrationScreenState();
 }
 
+const YesIcon = Icon(
+  Icons.check,
+  color: Colors.green,
+);
+const NoIcon = Icon(
+  Icons.close,
+  color: Colors.red,
+);
+
 class CalibrationScreenState extends State<CalibrationScreen> {
   static const int _maxLen = 60 * 1; // 60fps, 10s
-  static final _calibrationColorLeft = Colors.pink.withAlpha(180);
-  static final _calibrationColorRight = Colors.green.withAlpha(180);
+  static final _calibrationColorLeft = Colors.orange.withAlpha(180);
+  static final _calibrationColorRight = Colors.yellow.withAlpha(180);
   static final _bounds = Aabb3.minMax(Vector3(-1, -1, -1), Vector3(1, 1, 1));
+  static const _accelColor = Colors.purple;
 
   var _lastAccels = ListQueue<Vector3>(_maxLen);
   var _lastGyros = ListQueue<Vector3>(_maxLen);
   var _deviceState = g.device.state;
 
-  Vector3? _calibrateLeft;
-  Vector3? _calibrateRight;
-  double? _lastAngleLeft;
-  double? _lastAngleRight;
+  Vector3? _calibrateLeft = g.angler.calibrateLeft;
+  Vector3? _calibrateRight = g.angler.calibrateRight;
 
   final _controllerFront = DiTreDiController(
     rotationX: 0,
     rotationY: 0,
     rotationZ: 0,
-  );
-  final _controllerTop = DiTreDiController(
-    rotationX: 90,
-    rotationY: 0,
-    rotationZ: 0,
+    userScale: 1.8,
+    minUserScale: 1.5,
+    maxUserScale: 3,
   );
 
   Closer? _sensorCallbackCloser;
@@ -51,9 +55,9 @@ class CalibrationScreenState extends State<CalibrationScreen> {
   List<Point3D> _generateAccelPoints() {
     final len = _lastAccels.length;
     return _lastAccels.mapIndexed((v, i) {
-      final alpha = (i / len).remap(0, 1, 0, 255).floor();
+      final alpha = (i / len).remap(0, 1, 0, 150).floor();
       return Point3D(v.normalized(),
-          width: 2, color: Colors.red.withAlpha(alpha));
+          width: 2, color: _accelColor.withAlpha(alpha));
     }).toList();
   }
 
@@ -66,7 +70,7 @@ class CalibrationScreenState extends State<CalibrationScreen> {
         Vector3.zero(),
         last,
         width: 2,
-        color: Colors.red.withAlpha(180),
+        color: _accelColor,
       )
     ];
   }
@@ -94,6 +98,14 @@ class CalibrationScreenState extends State<CalibrationScreen> {
     }
 
     return buffer;
+  }
+
+  List<Line3D> _generateCoordinateAxes() {
+    return <Line3D>[
+      Line3D(Vector3.zero(), Vector3(0.5, 0, 0), width: 2, color: Colors.red),
+      Line3D(Vector3.zero(), Vector3(0, 0.5, 0), width: 2, color: Colors.green),
+      Line3D(Vector3.zero(), Vector3(0, 0, 0.5), width: 2, color: Colors.blue),
+    ];
   }
 
   VoidCallback? _onPressCalibrateLeft() {
@@ -140,13 +152,6 @@ class CalibrationScreenState extends State<CalibrationScreen> {
         _lastAccels.addLast(accel);
       });
     });
-    _angleChangedCallbackCloser =
-        g.angler.registerAngleChangedCallback((event) {
-      setState(() {
-        _lastAngleLeft = event.leftAngle;
-        _lastAngleRight = event.rightAngle;
-      });
-    });
   }
 
   @override
@@ -169,57 +174,92 @@ class CalibrationScreenState extends State<CalibrationScreen> {
     ];
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              children: [
-                Row(children: [
-                  ElevatedButton(
-                    onPressed: _onPressCalibrateLeft(),
-                    child: const Text('Calibrate Left'),
+      body: Column(
+        children: [
+          Container(
+            height: 200,
+            color: Colors.blueGrey,
+            child: DiTreDiDraggable(
+              controller: _controllerFront,
+              child: DiTreDi(
+                bounds: _bounds,
+                config: const DiTreDiConfig(),
+                figures: figures,
+                controller: _controllerFront,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    spreadRadius: 0,
+                    blurRadius: 4,
+                    offset: const Offset(0, -5), // changes position of shadow
                   ),
-                  ElevatedButton(
-                    onPressed: _onPressCalibrateRight(),
-                    child: const Text('Calibrate Right'),
-                  )
-                ]),
-                Text('AngleLeft: ${_lastAngleLeft?.radToDeg().floor()}'),
-                Text('AngleRight: ${_lastAngleRight?.radToDeg().floor()}'),
-                const SizedBox(height: 16),
-                Container(
-                  height: 200,
-                  color: Colors.blueGrey,
-                  child: DiTreDiDraggable(
-                    controller: _controllerFront,
-                    child: DiTreDi(
-                      bounds: _bounds,
-                      config: const DiTreDiConfig(),
-                      figures: figures,
-                      controller: _controllerFront,
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        children: <Widget>[
+                          const ListTile(
+                            title: Text(
+                              'Calibration State',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          ListTile(
+                            leading: _calibrateLeft != null ? YesIcon : NoIcon,
+                            title: const Text('Calibrated Left'),
+                          ),
+                          ListTile(
+                            leading: _calibrateRight != null ? YesIcon : NoIcon,
+                            title: const Text('Calibrated Right'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  height: 200,
-                  color: Colors.blueGrey,
-                  child: DiTreDiDraggable(
-                    controller: _controllerTop,
-                    child: DiTreDi(
-                      bounds: _bounds,
-                      config: const DiTreDiConfig(),
-                      figures: figures,
-                      controller: _controllerTop,
+                    Text(
+                      'To calibrate, first tilt your head to the left and click "Calibrate Left".',
+                      style: TextStyle(color: Colors.grey.shade700),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Then, tilt your head to the right, and click "Calibrate Right".',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _onPressCalibrateLeft(),
+                            child: const Text('Calibrate Left'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _onPressCalibrateRight(),
+                            child: const Text('Calibrate Right'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            )
-          ],
-        ),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }
