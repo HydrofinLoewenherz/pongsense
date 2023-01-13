@@ -143,6 +143,12 @@ We created a [custom fork][flutter-esense-fork] for the [flutter_esense package]
 To be able to convert the ESense outputs in usable formats like `g` or `m/s^2`, you have to get the current device configuration. Specifically to convert the accelerometer output, you need the accelerometers sensitivity factor.
 The problem is, that the original flutter package didn't map the ESense output to the provided event class ([see here](https://github.com/HydrofinLoewenherz/flutter-plugins/commit/b7d0e74f8717288b76bf748e3230e1341e67e552)). Additionally we added utilities to convert the config values into the sensitivity factors specified in the [ESense specification][esense-specification] ([see here](https://github.com/HydrofinLoewenherz/flutter-plugins/commit/c44c6a45ac12b4a7aefde0cef0c6251a03f52edc)).
 
+## Screenshots
+
+<img width="450" alt="Pongsense calibrate screen" src="https://user-images.githubusercontent.com/20629648/212373181-90ed9fe2-9f60-4f74-8b2e-d1df570801f4.png">
+<img width="450" alt="Pongsense connect screen" src="https://user-images.githubusercontent.com/20629648/212373187-06db6f64-d968-47ca-a4ff-ecc56d0588f9.png">
+<img width="450" alt="Pongsense play screen" src="https://user-images.githubusercontent.com/20629648/212373194-5e1c2f17-c182-4c57-b574-247a47222833.png">
+
 ## Authors
 
 The project was created by [Rico Münch (uozjn)][rico-github] and [Paul Wagner (ujhtl)][paul-github].
