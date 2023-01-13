@@ -40,8 +40,8 @@ class CalibrationScreenState extends State<CalibrationScreen> {
   Vector3? _calibrateRight = g.angler.calibrateRight;
 
   final _controllerFront = DiTreDiController(
-    rotationX: 0,
-    rotationY: 0,
+    rotationX: -90,
+    rotationY: 90,
     rotationZ: 0,
     userScale: 1.8,
     minUserScale: 1.5,
