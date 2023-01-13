@@ -10,16 +10,6 @@ class ConnectScreen extends StatefulWidget {
   ConnectScreenState createState() => ConnectScreenState();
 }
 
-// TableRow(children: <TableCell>[
-//                   TableCell(
-//                     verticalAlignment: TableCellVerticalAlignment.middle,
-//                     child: Text("Hello"),
-//                   ),
-//                   TableCell(
-//                       verticalAlignment: TableCellVerticalAlignment.middle,
-//                       child: Text("World"))
-//                 ])
-
 const YesIcon = Icon(
   Icons.check,
   color: Colors.green,
@@ -155,9 +145,6 @@ class ConnectScreenState extends State<ConnectScreen> {
                   ),
                 ],
               ),
-            ),
-            const Expanded(
-              child: SizedBox(),
             ),
             SizedBox(
               width: double.infinity,
