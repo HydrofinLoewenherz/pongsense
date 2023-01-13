@@ -14,7 +14,7 @@ class PongSense extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Pongsense',
       home: Navigation(),
     );
   }
