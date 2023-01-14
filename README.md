@@ -6,7 +6,7 @@ As the player tilts his head to the left and right, the paddle follows. This giv
 
 ## Considerations
 
-- **Target domain**: Anyone who wants to replay an old classic while also getting some movement in.
+- **Target domain**: Anyone who wants to replay an old classic while also getting some movement in
 - **Application class**: Gamebox
 - **Senses used**: Motory skills and vision (coordination between head position and eyes)
 - **Addressed part of memory**: Long-term procedural memory (sensory memory)
