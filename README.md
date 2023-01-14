@@ -1,8 +1,15 @@
 # Pongsense
 
-Pongsense is a simple implementation of Pong with flutter (for android). But with a twist, the player paddle is controlled with the [ESense Earable][esense].
+Pongsense is a simple implementation of the game Pong with flutter (for android). But with a twist, the player paddle is controlled with the [ESense Earable][esense].
 
-As the player tilts to the left and right, the paddle follows. This gives an interactive and dynamic way to play an old classic.
+As the player tilts his head to the left and right, the paddle follows. This gives an interactive and dynamic way to play an old classic.
+
+## Considerations
+
+- **Target domain**: Anyone who wants to replay an old classic while also getting some movement in.
+- **Application class**: Gamebox
+- **Senses used**: Motory skills and vision (coordination between head position and eyes)
+- **Addressed part of memory**: Long-term procedural memory (sensory memory)
 
 ## Usage
 
