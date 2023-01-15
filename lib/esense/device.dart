@@ -195,10 +195,6 @@ class Device {
     for (;;) {
       switch (__state) {
         case DeviceState.waiting:
-          if (!await _manager.connect()) {
-            throw Exception("couldn't start looking for device");
-          }
-          _state = DeviceState.searching;
           break; // look again
         case DeviceState.searching:
           break; // keep waiting
@@ -313,6 +309,7 @@ class Device {
         break;
       case ConnectionType.device_not_found:
         // assert(__state == DeviceState.searching, "invalid state-sequence");
+        _manager.connect();
         _state = DeviceState.searching;
         break;
     }
