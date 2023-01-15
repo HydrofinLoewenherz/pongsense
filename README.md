@@ -15,7 +15,7 @@ As the player tilts his head to the left and right, the paddle follows. This giv
 
 To play the game with the best experience, follow these steps.
 
-1. Open the app and enable Bluetooth
+1. Open the app and **enable Bluetooth and GPS**
 2. Start your [ESense Earable][esense]
 3. While on the `Connect`-Tab, click on `Connect`
 4. Wait until all connection state items have a checkmark
@@ -178,9 +178,7 @@ See the dependencies in the `pubspec.yml` for more information.
 
 [esense]: https://www.esense.io/ "ESense Homepage"
 [esense-specification]: https://www.esense.io/share/eSense-BLE-Specification.pdf "ESense Specification"
-
 [storybooks]: https://www.storyblocks.com/ "Storybooks Stock Media"
-
 [flutter-esense]: https://pub.dev/packages/esense_flutter "Flutter ESense package"
 [flutter-esense-fork]: https://github.com/HydrofinLoewenherz/flutter-plugins/tree/master/packages/esense_flutter "Flutter ESense package (custom fork)"
 [flame]: https://pub.dev/packages/flame "Flame package"
@@ -188,6 +186,5 @@ See the dependencies in the `pubspec.yml` for more information.
 [permission-handler]: https://pub.dev/packages/permission_handler "Permission handler package"
 [permission-handler]: https://pub.dev/packages/permission_handler "Permission handler package"
 [ditredi]: https://pub.dev/packages/ditredi "DiTreDi package"
-
 [paul-github]: https://github.com/HydrofinLoewenherz "ujhtl"
 [rico-github]: https://github.com/cryeprecision "uozjn"
